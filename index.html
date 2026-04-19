@@ -192,6 +192,7 @@
       </div>
       <button class="btn-rojo" onclick="irPag2()">Continuar →</button>
       <div class="divider-line"><span>@amapolastudio.cs</span></div>
+      <div style="text-align:center;margin-top:0.6rem;font-size:0.8rem;color:var(--texto-hint);">📞 +54 9 11 5902-9792</div>
     </div>
   </div>
   </div>
@@ -227,13 +228,21 @@
           <option value="lac">Laminado de cejas — $20.000</option>
           <option value="dl">Drenaje linfático manual — desde $35.000</option>
         </optgroup>
-        <optgroup label="Combos">
+        <optgroup label="Combos (1 hora)">
           <option value="combo1">Combo: Lifting + Perfilado — $30.000</option>
           <option value="combo2">Combo: Lifting + Laminado — $37.000</option>
+        </optgroup>
+        <optgroup label="Combos (2 horas)">
           <option value="combo3">Combo: Limpieza + Lifting — $52.000</option>
           <option value="combo4">Combo: Limpieza + Perfilado — $45.000</option>
           <option value="combo5">Combo: Limpieza + Drenaje — $65.000</option>
+          <option value="combo7">Combo: Limpieza + Lifting + Perfilado</option>
+          <option value="combo8">Combo: Limpieza + Lifting + Laminado</option>
+        </optgroup>
+        <optgroup label="Combos (2 hs 30 min)">
           <option value="combo6">Combo: Lifting + Drenaje — $52.000</option>
+          <option value="combo9">Combo: Limpieza + Lifting + Drenaje + Perfilado</option>
+          <option value="combo10">Combo: Limpieza + Lifting + Drenaje + Laminado</option>
         </optgroup>
       </select>
       <div id="precio-badge"></div>
@@ -282,10 +291,10 @@
     <h2>¡Turno reservado!</h2>
     <div class="sub">Falta un último paso para asegurar tu lugar</div>
     <div class="resumen-box" id="resumen-box"></div>
-    <div class="aviso-box">📌 La seña se <strong>descuenta del valor final</strong> y funciona como reserva del horario. Solo será devuelta si avisás con al menos <strong>24 horas de anticipación</strong>.</div>
+    <div class="aviso-box">📌 La seña se <strong>descuenta del valor final</strong> y funciona como reserva del horario.<br>⏰ Hay <strong>15 minutos de tolerancia</strong> para el ingreso.<br>❌ Cancelaciones con <strong>menos de 24 hs de anticipación</strong> pierden la seña.</div>
     <div class="monto-wrap">
-      <div class="monto-label">Seña a abonar (50%)</div>
-      <div class="monto-num" id="monto-num"></div>
+      <div class="monto-label">Seña a abonar</div>
+      <div class="monto-num" id="monto-num">$10.000</div>
     </div>
     <div class="transf-box">
       <div class="tl">Transferí al alias</div>
@@ -304,6 +313,7 @@
     <p id="txt-fin"></p>
     <div style="margin-top:1rem;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--dorado);font-size:1rem;">Te esperamos en Amapola Studio</div>
     <a class="ig-link" href="https://www.instagram.com/amapolastudio.cs" target="_blank">📷 @amapolastudio.cs</a>
+    <a class="ig-link" href="tel:+5491159029792" style="margin-top:0.5rem;">📞 +54 9 11 5902-9792</a>
   </div>
 </div>
 
@@ -364,10 +374,10 @@
             <div><label class="dk-label">Tratamiento</label>
               <select class="dk-in" id="mn-trat" style="margin:0;">
                 <option value="">— Seleccioná —</option>
-                <option value="lc">Limpieza de cutis</option>
                 <option value="lp">Lifting de pestañas</option>
                 <option value="pc">Perfilado de cejas</option>
                 <option value="lac">Laminado de cejas</option>
+                <option value="lc">Limpieza de cutis</option>
                 <option value="dl">Drenaje linfático</option>
                 <option value="combo1">Combo: Lifting + Perfilado</option>
                 <option value="combo2">Combo: Lifting + Laminado</option>
@@ -375,6 +385,10 @@
                 <option value="combo4">Combo: Limpieza + Perfilado</option>
                 <option value="combo5">Combo: Limpieza + Drenaje</option>
                 <option value="combo6">Combo: Lifting + Drenaje</option>
+                <option value="combo7">Combo: Limpieza + Lifting + Perfilado</option>
+                <option value="combo8">Combo: Limpieza + Lifting + Laminado</option>
+                <option value="combo9">Combo: Limpieza + Lifting + Drenaje + Perfilado</option>
+                <option value="combo10">Combo: Limpieza + Lifting + Drenaje + Laminado</option>
               </select>
             </div>
           </div>
@@ -401,19 +415,31 @@
 </div>
 
 <script>
+// dur = duración en minutos
+// camilla = true si requiere camilla exclusiva todo el tiempo (limpieza, drenaje y sus combos)
+// compartible = true si puede compartir camilla con otro tratamiento corto DESPUÉS de los primeros 30 min
+// Los tratamientos cortos (lp, pc, lac) solo usan camilla 30 min y pueden entrar cuando la camilla lleva 30+ min ocupada por un tratamiento compatible
 const TRATS = {
-  lc:     { n:'Limpieza de cutis',           dur:90, precio:35000, conc:1 },
-  lp:     { n:'Lifting de pestañas',         dur:30, precio:20000, conc:2 },
-  pc:     { n:'Perfilado de cejas',          dur:30, precio:13000, conc:2 },
-  lac:    { n:'Laminado de cejas',           dur:30, precio:20000, conc:2 },
-  dl:     { n:'Drenaje linfático manual',    dur:90, precio:35000, conc:1 },
-  combo1: { n:'Combo: Lifting + Perfilado',  dur:30, precio:30000, conc:2 },
-  combo2: { n:'Combo: Lifting + Laminado',   dur:30, precio:37000, conc:2 },
-  combo3: { n:'Combo: Limpieza + Lifting',   dur:90, precio:52000, conc:1 },
-  combo4: { n:'Combo: Limpieza + Perfilado', dur:90, precio:45000, conc:1 },
-  combo5: { n:'Combo: Limpieza + Drenaje',   dur:90, precio:65000, conc:1 },
-  combo6: { n:'Combo: Lifting + Drenaje',    dur:90, precio:52000, conc:1 },
+  lp:     { n:'Lifting de pestañas',                        dur:60,  precio:20000, camilla:'corta' },
+  pc:     { n:'Perfilado de cejas',                         dur:30,  precio:13000, camilla:'corta' },
+  lac:    { n:'Laminado de cejas',                          dur:30,  precio:20000, camilla:'corta' },
+  lc:     { n:'Limpieza de cutis',                          dur:90,  precio:35000, camilla:'exclusiva' },
+  dl:     { n:'Drenaje linfático manual',                   dur:90,  precio:35000, camilla:'exclusiva' },
+  combo1: { n:'Combo: Lifting + Perfilado',                 dur:60,  precio:30000, camilla:'larga' },
+  combo2: { n:'Combo: Lifting + Laminado',                  dur:60,  precio:37000, camilla:'larga' },
+  combo3: { n:'Combo: Limpieza + Lifting',                  dur:120, precio:52000, camilla:'exclusiva' },
+  combo4: { n:'Combo: Limpieza + Perfilado',                dur:120, precio:45000, camilla:'exclusiva' },
+  combo5: { n:'Combo: Limpieza + Drenaje',                  dur:120, precio:65000, camilla:'exclusiva' },
+  combo6: { n:'Combo: Lifting + Drenaje',                   dur:150, precio:52000, camilla:'exclusiva' },
+  combo7: { n:'Combo: Limpieza + Lifting + Perfilado',      dur:120, precio:0,     camilla:'exclusiva' },
+  combo8: { n:'Combo: Limpieza + Lifting + Laminado',       dur:120, precio:0,     camilla:'exclusiva' },
+  combo9: { n:'Combo: Limpieza + Lifting + Drenaje + Perfilado', dur:150, precio:0, camilla:'exclusiva' },
+  combo10:{ n:'Combo: Limpieza + Lifting + Drenaje + Laminado',  dur:150, precio:0, camilla:'exclusiva' },
 };
+// camilla types:
+// 'exclusiva' → nadie más puede usar la camilla mientras dure el turno
+// 'larga'     → 60min, puede aceptar un turno 'corta' a partir del minuto 30
+// 'corta'     → 30min, puede entrar en la segunda mitad de un turno 'larga'
 const HS = [];
 for(let h=9;h<19;h++){HS.push(h*60);HS.push(h*60+30);}
 let est = { cliente:{}, trat:'', zonas:[], fecha:null, hora:null, mesAct:new Date() };
@@ -426,7 +452,7 @@ const fPeso = n => '$' + n.toLocaleString('es-AR');
 const mStr = m => { const h=Math.floor(m/60),mn=m%60; return h+':'+(mn<10?'0':'')+mn; };
 const fISO = d => d.toISOString().slice(0,10);
 const hoyD = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
-const esDrenaje = k => ['dl','combo5','combo6'].includes(k);
+const esDrenaje = k => ['dl','combo5','combo6','combo9','combo10'].includes(k);
 
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -524,17 +550,51 @@ function selFecha(iso,el){
   document.getElementById('box-hs').style.display='block';
 }
 
-function esDisp(minI,k,fecha){
-  const t=TRATS[k]; const fin=minI+t.dur;
-  if(fin>19*60)return false;
-  const oc=getTurnos().filter(x=>x.fecha===fecha);
-  for(const o of oc){
-    const oT=TRATS[o.trat]; if(!oT)continue;
-    const oF=o.hora+oT.dur;
-    if(minI>=oF||fin<=o.hora)continue;
-    if(t.conc===1||oT.conc===1)return false;
-    const simult=oc.filter(x=>{const xT=TRATS[x.trat];return xT&&xT.conc===2&&x.hora<fin&&(x.hora+xT.dur)>minI;}).length;
-    if(simult>=2)return false;
+// Nueva lógica de disponibilidad con camilla compartida
+// Regla: solo hay UNA camilla.
+// - 'exclusiva': bloquea toda la camilla mientras dura
+// - 'larga' (60min): los primeros 30min bloquea sola; a partir del min 30 puede entrar un turno 'corta'
+// - 'corta' (30min): puede entrar cuando hay un turno 'larga' que ya lleva 30+ min activo
+function esDisp(minI, k, fecha) {
+  const t = TRATS[k];
+  const fin = minI + t.dur;
+  if (fin > 19 * 60) return false;
+
+  const oc = getTurnos().filter(x => x.fecha === fecha);
+
+  // Verificar si la camilla está disponible en cada slot de 30 min dentro del nuevo turno
+  // Dividimos el tiempo en bloques de 30 min para evaluar superposiciones
+  for (const o of oc) {
+    const oT = TRATS[o.trat];
+    if (!oT) continue;
+    const oInicio = o.hora;
+    const oFin = oInicio + oT.dur;
+
+    // ¿Hay solapamiento temporal?
+    if (minI >= oFin || fin <= oInicio) continue; // Sin solapamiento
+
+    // Hay solapamiento. Aplicar reglas de camilla:
+    // Si cualquiera de los dos es 'exclusiva' → NO compatible
+    if (t.camilla === 'exclusiva' || oT.camilla === 'exclusiva') return false;
+
+    // Ambos son 'larga' o 'corta' → evaluar compatibilidad
+    // Caso: nuevo es 'corta', existente es 'larga'
+    if (t.camilla === 'corta' && oT.camilla === 'larga') {
+      // El nuevo 'corta' puede entrar solo si empieza a partir del minuto 30 del turno 'larga'
+      if (minI < oInicio + 30) return false; // empieza antes de que la larga lleve 30 min
+      // Y el 'corta' no puede extenderse más allá del fin del 'larga'
+      if (fin > oFin) return false;
+    }
+    // Caso: nuevo es 'larga', existente es 'corta'
+    else if (t.camilla === 'larga' && oT.camilla === 'corta') {
+      // El 'corta' existente debe haber entrado a partir del min 30 del nuevo 'larga'
+      if (oInicio < minI + 30) return false;
+      if (oFin > fin) return false;
+    }
+    // Ambos 'larga' o ambos 'corta' → no pueden superponerse
+    else {
+      return false;
+    }
   }
   return true;
 }
@@ -564,20 +624,20 @@ function confirmarTurno(){
 }
 
 function renderSeña(){
-  const t=TRATS[est.trat]; const precio=getPrecio(); const seña=Math.round(precio*0.5);
+  const t=TRATS[est.trat]; const precio=getPrecio(); const SEÑA_FIJA=10000;
   const fObj=new Date(est.fecha+'T12:00');
   const DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const MESES2=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const fStr=DIAS[fObj.getDay()]+' '+fObj.getDate()+' de '+MESES2[fObj.getMonth()];
   let zTxt=est.zonas.length>0?'<br>Zonas: <b>'+est.zonas.join(', ')+'</b>':'';
   document.getElementById('resumen-box').innerHTML='🌺 <b>'+t.n+'</b>'+zTxt+'<br>📅 <b>'+fStr+'</b> a las <b>'+mStr(est.hora)+' hs</b><br>👤 <b>'+est.cliente.nom+' '+est.cliente.ape+'</b><br>💰 Total: <b>'+fPeso(precio)+'</b>';
-  document.getElementById('monto-num').textContent=fPeso(seña);
+  document.getElementById('monto-num').textContent=fPeso(SEÑA_FIJA);
   document.getElementById('alias-show').textContent=getCfg().alias;
 }
 
 function irFin(){
   const t=TRATS[est.trat]; const precio=getPrecio();
-  const turno={id:Date.now().toString(),nom:est.cliente.nom,ape:est.cliente.ape,tel:est.cliente.tel,trat:est.trat,tratN:t.n,fecha:est.fecha,hora:est.hora,precio,seña:Math.round(precio*0.5),zonas:est.zonas,notas:'',origen:'web',at:new Date().toISOString()};
+  const turno={id:Date.now().toString(),nom:est.cliente.nom,ape:est.cliente.ape,tel:est.cliente.tel,trat:est.trat,tratN:t.n,fecha:est.fecha,hora:est.hora,precio,seña:10000,zonas:est.zonas,notas:'',origen:'web',at:new Date().toISOString()};
   const ts=getTurnos(); ts.push(turno); setTurnos(ts);
   const fObj=new Date(est.fecha+'T12:00');
   const MESES2=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -648,7 +708,7 @@ function guardarManual(){
   const err=document.getElementById('err-manual');
   if(!nom||!ape||!tel||!trat||!fecha||!hora){err.style.display='block';setTimeout(()=>err.style.display='none',3000);return;}
   const t=TRATS[trat];
-  const turno={id:Date.now().toString(),nom,ape,tel,trat,tratN:t.n,fecha,hora:parseInt(hora),precio:t.precio,seña:Math.round(t.precio*0.5),zonas:[],notas,origen:'manual',at:new Date().toISOString()};
+  const turno={id:Date.now().toString(),nom,ape,tel,trat,tratN:t.n,fecha,hora:parseInt(hora),precio:t.precio,seña:10000,zonas:[],notas,origen:'manual',at:new Date().toISOString()};
   const ts=getTurnos();ts.push(turno);setTurnos(ts);
   ['mn-nom','mn-ape','mn-tel','mn-notas'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mn-trat').value='';document.getElementById('mn-fecha').value='';
