@@ -662,19 +662,24 @@ p { line-height:1.6; margin-bottom:1rem; }
       <div class="config-section-dark">
         <h3>Configuración general</h3>
         <div class="config-item">
-          <label>Alias para transferencias</label>
+          <label style="color:var(--adm-text);font-weight:600;display:block;margin-bottom:0.4rem;">Alias de transferencia (Mercado Pago)</label>
           <input type="text" class="dk-in-dark" id="cfg-alias" value="AMAPOLA.STUDIO">
         </div>
-        <div class="config-item">
-          <label>Contraseña admin</label>
+        <div class="config-item" style="margin-top:1rem;">
+          <label style="color:var(--adm-text);font-weight:600;display:block;margin-bottom:0.4rem;">Contraseña admin</label>
           <input type="password" class="dk-in-dark" id="cfg-pass" value="amapola2025">
         </div>
-        <button class="btn-rojo-sm" onclick="guardarConfig()">Guardar configuración</button>
+        <div class="config-item" style="margin-top:1rem;">
+          <label style="color:var(--adm-text);font-weight:600;display:block;margin-bottom:0.2rem;">📱 Número WhatsApp Business</label>
+          <p style="font-size:0.8rem;color:var(--adm-hint);margin-bottom:0.5rem;">Número que se usa al tocar "💬 WhatsApp" en el admin. Dejá vacío para usar el normal.</p>
+          <input type="text" class="dk-in-dark" id="cfg-wa-business" placeholder="Ej: 5491159029792">
+        </div>
+        <button class="btn-rojo-sm" style="margin-top:1.2rem;" onclick="guardarConfig()">Guardar configuración</button>
       </div>
       <div class="config-section-dark">
         <h3>Precios de tratamientos</h3>
         <div id="precios-editor"></div>
-        <button class="btn-rojo-sm" onclick="guardarPrecios()">Guardar precios</button>
+        <button class="btn-rojo-sm" style="margin-top:1rem;" onclick="guardarPrecios()">Guardar precios</button>
       </div>
     </div>
   </div>
@@ -884,48 +889,60 @@ function getPrecio() {
 
 // Generar mensaje personalizado por tratamiento
 function generarMensajeRecordatorio(tratN, tratK, fecha, hora, zonas=[]) {
-  const linea_base = `Hola, te recordamos tu turno de ${tratN} el día ${fecha} a las ${hora} hs. 🌺\n\n`;
-  
-  let instrucciones = '';
-  
-  // Definir instrucciones por tratamiento
-  const msgs = {
-    'lp': 'Recordá venir sin máscara de pestañas ni maquillaje de cejas.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs.\nDuración aprox: 1 hora',
-    'pc': '', // Sin instrucciones
-    'lac': 'Recordá venir sin maquillaje de cejas (en lo posible).\nLuego del tratamiento no podés mojarte ni maquillarte por 24hs.\nDuración aprox: 30/45 min',
-    'lc': 'Recordá venir sin maquillaje (en lo posible).\nEvitá el sol las próximas 48hs.\nReforzá protección solar los días posteriores.\nDuración aprox: 1:30/45 hs',
-    'peeling': 'No realizar actividad física el día del tratamiento.\nEvitá el sol los próximos días.\nReforzá protección solar.\nDuración aprox: 1:30 hs',
-    'dl': 'Vení con ropa cómoda.\nLa zona a tratar debe estar descubierta.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '')
-  };
-  
-  // Para combos, combinar instrucciones
-  if (tratK.startsWith('combo')) {
-    const comboParts = {
-      'combo1': ['lp', 'pc'], // Lifting + Perfilado
-      'combo2': ['lp', 'lac'], // Lifting + Laminado
-      'combo3': ['lc', 'lp'], // Limpieza + Lifting
-      'combo4': ['lc', 'pc'], // Limpieza + Perfilado
-      'combo5': ['lc', 'dl'], // Limpieza + Drenaje
-      'combo6': ['lp', 'dl'], // Lifting + Drenaje
-      'combo7': ['lc', 'lp', 'pc'], // Limpieza + Lifting + Perfilado
-      'combo8': ['lc', 'lp', 'lac'], // Limpieza + Lifting + Laminado
-      'combo9': ['lc', 'lp', 'dl', 'pc'], // Limpieza + Lifting + Drenaje + Perfilado
-      'combo10': ['lc', 'lp', 'dl', 'lac'] // Limpieza + Lifting + Drenaje + Laminado
-    };
-    
-    const parts = comboParts[tratK] || [];
-    const instrArr = [];
-    parts.forEach(p => {
-      if (msgs[p]) instrArr.push(msgs[p]);
-    });
-    instrucciones = instrArr.filter(x => x).join('\n\n');
-  } else {
-    instrucciones = msgs[tratK] || '';
-  }
-  
+  const header = 'Hola, te recordamos tu turno de ' + tratN + ' el día ' + fecha + ' a las ' + hora + ' hs. 🌺\n\n';
   const footer = '\n\nRecordá que contamos con 15 minutos de tolerancia pasado el horario del turno. La seña es reembolsable únicamente cancelando con más de 24hs de anticipación, de lo contrario se pierde.\n\nEste es un momento para vos! Vení tranquila/o a disfrutarlo 🩷\nCualquier duda podés consultarme.\n\nAmapola Studio';
-  
-  return linea_base + (instrucciones ? instrucciones + footer : 'Cualquier duda podés consultarme.\n' + footer);
+
+  // ── Tratamientos individuales ──
+  const individual = {
+    'lp':      'Recordá venir sin máscara de pestañas ni maquillaje de cejas.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs.\nDuración aprox: 1 hora.',
+    'pc':      '', // Sin instrucciones especiales
+    'lac':     'Recordá venir sin maquillaje de cejas (en lo posible).\nLuego del tratamiento no podés mojarte ni maquillarte por 24hs.\nDuración aprox: 30/45 min.',
+    'lc':      'Recordá venir sin maquillaje (en lo posible).\nEvitá el sol las próximas 48hs y reforzá la protección solar los días posteriores.\nDuración aprox: 1:30/45 hs.',
+    'peeling': 'No realizar actividad física el día del tratamiento.\nEvitá el sol los próximos días y reforzá la protección solar.\nDuración aprox: 1:30 hs.',
+    'dl':      'Vení con ropa cómoda, la zona a tratar debe estar descubierta.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '')
+  };
+
+  // ── Mensajes únicos por combo (sin repeticiones) ──
+  const combos = {
+    // Lifting + Perfilado — 1 hora
+    'combo1': 'Venir sin máscara de pestañas ni maquillaje de cejas.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs.\nDuración aprox: 1 hora.',
+
+    // Lifting + Laminado — 1 hora
+    'combo2': 'Venir sin maquillaje de cejas ni máscara de pestañas.\nLuego del tratamiento no podés mojarte ni maquillarte ni cejas ni pestañas por 24hs.\nDuración aprox: 1 hora.',
+
+    // Limpieza + Lifting — 2 hs
+    'combo3': 'Venir sin maquillaje ni máscara de pestañas.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.\nDuración aprox: 2 horas.',
+
+    // Limpieza + Perfilado — 2 hs
+    'combo4': 'Venir sin maquillaje (en lo posible).\nEvitá el sol las próximas 48hs y reforzá la protección solar los días posteriores.\nDuración aprox: 2 horas.',
+
+    // Limpieza + Drenaje — 2 hs
+    'combo5': 'Venir sin maquillaje (en lo posible) y con ropa cómoda, la zona de drenaje debe estar descubierta.\nEvitá el sol las próximas 48hs y reforzá la protección solar.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '') + '\nDuración aprox: 2 horas.',
+
+    // Lifting + Drenaje — no tiene duración en la lista, usamos el genérico
+    'combo6': 'Venir sin máscara de pestañas ni maquillaje de cejas y con ropa cómoda, la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : ''),
+
+    // Limpieza + Lifting + Perfilado — 2 hs
+    'combo7': 'Venir sin maquillaje ni máscara de pestañas.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.\nDuración aprox: 2 horas.',
+
+    // Limpieza + Lifting + Laminado — 2 hs
+    'combo8': 'Venir sin maquillaje, máscara de pestañas ni maquillaje de cejas.\nLuego del tratamiento no podés mojarte ni maquillarte pestañas ni cejas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.\nDuración aprox: 2 horas.',
+
+    // Limpieza + Lifting + Drenaje + Perfilado — 2 hs y media
+    'combo9': 'Venir sin maquillaje ni máscara de pestañas, y con ropa cómoda ya que la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '') + '\nDuración aprox: 2 horas y media.',
+
+    // Limpieza + Lifting + Drenaje + Laminado — 2 hs y media
+    'combo10': 'Venir sin maquillaje, máscara de pestañas ni maquillaje de cejas, y con ropa cómoda ya que la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte pestañas ni cejas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '') + '\nDuración aprox: 2 horas y media.'
+  };
+
+  let instrucciones = '';
+  if (tratK.startsWith('combo')) {
+    instrucciones = combos[tratK] || '';
+  } else {
+    instrucciones = individual[tratK] || '';
+  }
+
+  return header + (instrucciones ? instrucciones + footer : footer);
 }
 
 
