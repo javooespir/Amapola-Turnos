@@ -959,10 +959,17 @@ async function enviarEmailTurno(nom, ape, tel, tratN, fecha, hora, precio) {
   try {
     const response = await fetch('https://brtuieevrokgxreypyox.supabase.co/functions/v1/swift-function', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY
+      },
       body: JSON.stringify({ nom, ape, tel, tratN, fecha, hora, precio })
     });
-    if (!response.ok) console.error('Error enviando email');
+    if (!response.ok) {
+      const err = await response.text();
+      console.error('Error enviando email:', err);
+    }
   } catch (error) {
     console.error('Error al enviar email:', error);
   }
