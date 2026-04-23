@@ -795,7 +795,7 @@ let agendaFechaActual = new Date();
 // SUPABASE CONFIG
 // ════════════════════════════════════════════════
 const SB_URL  = 'https://brtuieevrokgxreypyox.supabase.co';
-const SB_KEY  = 'sb_publishable_5L62P656hK1PoEzN-_AEbA_0eBAfn8b';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJydHVpZWV2cm9rZ3hyZXlweW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3Nzg0OTcsImV4cCI6MjA5MjM1NDQ5N30.gKsQ0y8_zrPRpRe0srmv_bBCtOPg_iOKzQJgFWJq2O4';
 const SB_HDR  = { 'Content-Type':'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
 
 async function sbGet(tabla, params='') {
@@ -1424,8 +1424,13 @@ function irFin() {
   const aliasActual = getCfg().alias;
   const el = document.getElementById('alias-fin');
   if (el) el.textContent = aliasActual;
-  const msgPersonalizado = generarMensajeRecordatorio(t.n, est.trat, fStr, mStr(est.hora), est.zonas);
-  const wpTxt = encodeURIComponent(msgPersonalizado);
+  // Mensaje simple del CLIENTE enviando comprobante (NO el recordatorio del admin)
+  const msgComprobante = 'Hola! Te envio el comprobante de la seña 💸' +
+    '\nTurno: ' + t.n +
+    '\nFecha: ' + fStr + ' a las ' + mStr(est.hora) + ' hs' +
+    '\nNombre: ' + turno.nom + ' ' + turno.ape +
+    '\nAlias transferido: ' + aliasActual;
+  const wpTxt = encodeURIComponent(msgComprobante);
   const btnWp = document.getElementById('btn-wp-comprobante');
   if (btnWp) btnWp.href = 'https://wa.me/5491159029792?text=' + wpTxt;
 
