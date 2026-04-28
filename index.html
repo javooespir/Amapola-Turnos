@@ -109,8 +109,13 @@ p { line-height:1.6; margin-bottom:1rem; }
 #p-admin-login.active { display:block; }
 
 .agenda-day-view { background:var(--adm-surface); border-radius:12px; padding:1.2rem; margin-bottom:1.5rem; border:1px solid var(--adm-border); }
-.agenda-date-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.7rem; border-bottom:1px solid var(--adm-border); }
+.agenda-date-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.7rem; border-bottom:1px solid var(--adm-border); gap:0.4rem; }
 .agenda-date-nav span { font-weight:700; font-size:1rem; color:var(--adm-text); }
+@media (max-width:600px) {
+  .agenda-date-nav { flex-wrap:wrap; }
+  .agenda-date-nav span { width:100%; text-align:center; order:-1; font-size:0.9rem; }
+  .agenda-date-nav .btn-rojo-sm { flex:1; padding:0.45rem 0.5rem; font-size:0.78rem; border-radius:12px; }
+}
 .agenda-slot { display:flex; border-bottom:1px solid var(--adm-border); min-height:64px; }
 .agenda-slot:last-child { border-bottom:none; }
 .agenda-time { width:75px; padding:0.6rem 0.5rem; font-weight:600; font-size:0.82rem; color:var(--adm-hint); flex-shrink:0; padding-top:0.8rem; }
