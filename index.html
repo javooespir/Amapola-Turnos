@@ -783,6 +783,17 @@ let agendaFechaActual = new Date();
     try { _bloqueosCache = JSON.parse(localStorage.getItem('amp_blq')||'[]'); } catch { _bloqueosCache = []; }
   }
 
+  // Cargar precios desde Supabase (para que el admin siempre tenga los precios actuales)
+  try {
+    const pr = await fetch(SB_URL + '/rest/v1/precios?select=trat,precio', { headers: SB_HDR });
+    const pd = await pr.json();
+    if (Array.isArray(pd) && pd.length > 0) {
+      const p = {};
+      pd.forEach(row => { p[row.trat] = row.precio; });
+      setPrecios(p);
+    }
+  } catch(e) {}
+
   // Remover overlay
   overlay.remove();
 
@@ -2133,18 +2144,24 @@ function guardarConfig() {
   alert('Configuración guardada');
 }
 
-function guardarPrecios() {
+async function guardarPrecios() {
   const precios = {};
-  
   Object.keys(TRATS).forEach(k => {
     const input = document.getElementById('precio-' + k);
-    if (input) {
-      precios[k] = parseInt(input.value);
-    }
+    if (input) precios[k] = parseInt(input.value);
   });
-  
   setPrecios(precios);
-  alert('Precios guardados');
+  try {
+    const rows = Object.entries(precios).map(([trat, precio]) => ({ trat, precio }));
+    const r = await fetch(SB_URL + '/rest/v1/precios', {
+      method: 'POST',
+      headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(rows)
+    });
+    alert(r.ok ? 'Precios guardados y sincronizados ✓' : 'Precios guardados localmente');
+  } catch(e) {
+    alert('Precios guardados localmente (sin conexión)');
+  }
 }
 
 // EXPORTAR ICS
