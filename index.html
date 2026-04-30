@@ -799,6 +799,17 @@ let agendaFechaActual = new Date();
     }
   } catch(e) {}
 
+  // Cargar config (alias) desde Supabase
+  try {
+    const cr = await fetch(SB_URL + '/rest/v1/config?select=key,value', { headers: SB_HDR });
+    const cd = await cr.json();
+    if (Array.isArray(cd) && cd.length > 0) {
+      const override = {};
+      cd.forEach(row => { override[row.key] = row.value; });
+      setCfg({ ...getCfg(), ...override });
+    }
+  } catch(e) {}
+
   // Remover overlay
   overlay.remove();
 
@@ -2139,14 +2150,24 @@ function renderConfig() {
   document.getElementById('precios-editor').innerHTML = html;
 }
 
-function guardarConfig() {
+async function guardarConfig() {
   const cfg = {
     alias: document.getElementById('cfg-alias').value.trim(),
     pass: document.getElementById('cfg-pass').value,
     waBusiness: document.getElementById('cfg-wa-business').value.trim() || ''
   };
   setCfg(cfg);
-  alert('Configuración guardada');
+  try {
+    const rows = [{ key: 'alias', value: cfg.alias }];
+    const r = await fetch(SB_URL + '/rest/v1/config', {
+      method: 'POST',
+      headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(rows)
+    });
+    alert(r.ok ? 'Configuración guardada y sincronizada ✓' : 'Configuración guardada localmente');
+  } catch(e) {
+    alert('Configuración guardada localmente (sin conexión)');
+  }
 }
 
 async function guardarPrecios() {
