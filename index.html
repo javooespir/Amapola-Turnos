@@ -1402,7 +1402,7 @@ function renderSeña() {
   document.getElementById('alias-show').textContent = getCfg().alias;
 }
 
-function irFin() {
+async function irFin() {
   const t = TRATS[est.trat];
   const precio = getPrecio();
 
@@ -1424,7 +1424,11 @@ function irFin() {
     at: new Date().toISOString()
   };
 
-  // Guardar en Supabase + cache local
+  // Mostrar estado de carga mientras se guarda
+  const btnFin = document.querySelector('[onclick="irFin()"]');
+  if (btnFin) { btnFin.disabled = true; btnFin.textContent = 'Guardando turno...'; }
+
+  // Guardar en Supabase — esperar resultado antes de mostrar confirmación
   const sbData = {
     id: turno.id, nom: turno.nom, ape: turno.ape, tel: turno.tel,
     trat: turno.trat, "tratN": turno.tratN, fecha: turno.fecha,
@@ -1432,17 +1436,28 @@ function irFin() {
     "señaPagada": false, zonas: turno.zonas, notas: turno.notas,
     origen: turno.origen, at: turno.at
   };
-  sbInsert('turnos', sbData).catch(function(){});
-  
+
+  let sbOk = false;
+  try { sbOk = await sbInsert('turnos', sbData); } catch(e) { sbOk = false; }
+
+  if (!sbOk) {
+    // Restaurar botón y mostrar error claro
+    if (btnFin) { btnFin.disabled = false; btnFin.textContent = 'Finalizar reserva'; }
+    alert('⚠️ No se pudo guardar el turno (problema de conexión).\n\nReintentá en unos segundos. Si el problema persiste, escribinos por WhatsApp para reservar directamente.');
+    return;
+  }
+
+  // Guardado OK → actualizar cache local
+  const turnos = getTurnos();
+  turnos.push(turno);
+  setTurnos(turnos);
+
   // Enviar email de notificación
   const DIAS3 = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const MESES3 = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const f = new Date(est.fecha + 'T12:00');
   const fechaFormato = DIAS3[f.getDay()] + ' ' + f.getDate() + ' de ' + MESES3[f.getMonth()];
   enviarEmailTurno(est.cliente.nom, est.cliente.ape, est.cliente.tel, t.n, fechaFormato, mStr(est.hora), precio);
-  const turnos = getTurnos();
-  turnos.push(turno);
-  setTurnos(turnos);
 
   const fObj = new Date(est.fecha + 'T12:00');
   const DIAS2 = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
@@ -1456,7 +1471,6 @@ function irFin() {
   const aliasActual = getCfg().alias;
   const el = document.getElementById('alias-fin');
   if (el) el.textContent = aliasActual;
-  // Mensaje simple del CLIENTE enviando comprobante (NO el recordatorio del admin)
   const msgComprobante = 'Hola! Te envio el comprobante de la seña 💸' +
     '\nTurno: ' + t.n +
     '\nFecha: ' + fStr + ' a las ' + mStr(est.hora) + ' hs' +
