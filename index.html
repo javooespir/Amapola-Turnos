@@ -2073,8 +2073,25 @@ function guardarManual() {
     alert('Completá todos los campos obligatorios');
     return;
   }
-  
+
+  // Verificar conflictos antes de guardar
+  const horaNum = parseInt(hora);
   const t = TRATS[trat];
+  const conflictos = getTurnos().filter(x => {
+    if (x.fecha !== fecha) return false;
+    const xObj = TRATS[x.trat];
+    if (!xObj) return false;
+    return horaNum < x.hora + xObj.dur && horaNum + t.dur > x.hora;
+  });
+  if (conflictos.length > 0) {
+    const detalle = conflictos.map(x => `• ${x.nom} ${x.ape} — ${x.tratN} (${mStr(x.hora)}–${mStr(x.hora + (TRATS[x.trat]?.dur||60))} hs)`).join('\n');
+    const confirmar = confirm(
+      `⚠️ CONFLICTO DE HORARIO\n\n` +
+      `Ya hay ${conflictos.length === 1 ? 'un turno' : 'turnos'} que solapan con este horario:\n\n${detalle}\n\n` +
+      `¿Querés guardar el turno igual? Esta acción es tu responsabilidad.`
+    );
+    if (!confirmar) return;
+  }
   const precios = getPrecios();
   const precio = precios[trat] !== undefined ? precios[trat] : t.precio;
   
