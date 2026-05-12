@@ -2142,9 +2142,22 @@ function actualizarHorasManual() {
   }
 
   // Admin puede cargar en cualquier horario de 9 a 20hs (sin restricción de HDIAS)
+  const nuevoTrat = TRATS[trat];
+  const turnosDia = getTurnos().filter(t => t.fecha === fecha);
+
   let html = '<option value="">— Elegí un horario —</option>';
   for (let m = 9*60; m < 20*60; m += 30) {
-    html += `<option value="${m}">${mStr(m)}</option>`;
+    // Verificar si el nuevo turno [m, m+dur) solapa con alguno ya existente
+    const conflicto = turnosDia.find(t => {
+      const tObj = TRATS[t.trat];
+      if (!tObj) return false;
+      return m < t.hora + tObj.dur && m + nuevoTrat.dur > t.hora;
+    });
+    if (conflicto) {
+      html += `<option value="${m}">${mStr(m)} · ⚠️ ${conflicto.nom} (${conflicto.tratN})</option>`;
+    } else {
+      html += `<option value="${m}">${mStr(m)}</option>`;
+    }
   }
   sel.innerHTML = html;
 }
