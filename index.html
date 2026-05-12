@@ -647,7 +647,7 @@ p { line-height:1.6; margin-bottom:1rem; }
             </select>
           </div>
         </div>
-        <label style="font-size:0.8rem;color:var(--adm-hint);display:block;margin-bottom:0.3rem;margin-top:0.5rem;">3. Hora disponible</label>
+        <label style="font-size:0.8rem;color:var(--adm-hint);display:block;margin-bottom:0.3rem;margin-top:0.5rem;">3. Hora (9 a 20hs)</label>
         <select class="dk-in-dark" id="mn-hora">
           <option value="">— Seleccioná fecha y tratamiento primero —</option>
         </select>
@@ -1579,47 +1579,54 @@ function renderAgenda() {
 
   // Verificar bloqueos
   const bloqueos = getBloqueos().filter(b => b.fecha === fechaISO);
-  const bloqTodo = bloqueos.find(b => b.tipo === 'todo');
-
-  let rangos = HDIAS[diaSemana] || [];
-
-  // Aplicar bloqueos parciales
-  if (bloqTodo) {
-    const motivo = bloqTodo.motivo || 'Día bloqueado';
-    document.getElementById('agenda-slots').innerHTML = `<div style="text-align:center;padding:2rem;color:#E74C3C;">🔒 ${motivo}</div>`;
-    return;
-  }
-
+  const bloqTodo   = bloqueos.find(b => b.tipo === 'todo');
   const bloqMañana = bloqueos.find(b => b.tipo === 'mañana');
   const bloqTarde  = bloqueos.find(b => b.tipo === 'tarde');
-  if (bloqMañana || bloqTarde) {
-    rangos = rangos.map(([ini, fin]) => {
-      if (bloqMañana && fin <= 13*60) return null;
-      if (bloqMañana && ini < 13*60) return [13*60, fin];
-      if (bloqTarde && ini >= 13*60) return null;
-      if (bloqTarde && fin > 13*60) return [ini, 13*60];
-      return [ini, fin];
-    }).filter(Boolean);
-  }
 
-  if (rangos.length === 0) {
-    document.getElementById('agenda-slots').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--adm-hint);">Cerrado este día 🚫</div>';
-    return;
-  }
-
+  // El admin SIEMPRE ve 9-20hs sin importar el día ni los bloqueos.
+  // Los bloqueos se muestran como bandas de color sobre los slots (no los ocultan).
   const SLOT_H = 60;
-  let allSlots = [];
-  rangos.forEach(([ini, fin]) => {
-    for (let m = ini; m < fin; m += 30) allSlots.push(m);
-  });
+  const allSlots = [];
+  for (let m = 9*60; m < 20*60; m += 30) allSlots.push(m);
+
+  // Rangos laborales del día (para diferenciar visualmente horas de trabajo)
+  const rangosLaborales = HDIAS[diaSemana] || [];
 
   const turnos = getTurnos().filter(t => t.fecha === fechaISO);
 
+  // Banner de bloqueo total (se muestra pero no oculta la agenda)
+  let banners = '';
+  if (bloqTodo) {
+    banners = `<div style="margin-bottom:0.7rem;padding:0.55rem 1rem;background:#2A1515;border-left:3px solid #E74C3C;border-radius:6px;font-size:0.82rem;color:#E74C3C;">
+      🔒 Agenda bloqueada — ${bloqTodo.motivo || 'Día bloqueado'}
+    </div>`;
+  }
+
   let html = `<div style="position:relative;min-height:${allSlots.length * SLOT_H}px;">`;
 
+  // Banda sombreada para bloqueos parciales (por encima de los slots, pointer-events:none)
+  if (!bloqTodo && bloqMañana) {
+    const endIdx = allSlots.indexOf(13 * 60);
+    if (endIdx > 0) {
+      html += `<div style="position:absolute;top:0;left:0;right:0;height:${endIdx*SLOT_H}px;background:rgba(231,76,60,0.07);border-left:3px solid rgba(231,76,60,0.3);pointer-events:none;z-index:1;border-radius:4px 0 0 4px;">
+        <span style="position:absolute;top:5px;right:8px;font-size:0.68rem;color:rgba(231,76,60,0.6);">🔒 Mañana bloqueada${bloqMañana.motivo ? ' · ' + bloqMañana.motivo : ''}</span>
+      </div>`;
+    }
+  }
+  if (!bloqTodo && bloqTarde) {
+    const startIdx = allSlots.indexOf(13 * 60);
+    if (startIdx >= 0) {
+      html += `<div style="position:absolute;top:${startIdx*SLOT_H}px;left:0;right:0;bottom:0;background:rgba(231,76,60,0.07);border-left:3px solid rgba(231,76,60,0.3);pointer-events:none;z-index:1;border-radius:4px 0 0 4px;">
+        <span style="position:absolute;top:5px;right:8px;font-size:0.68rem;color:rgba(231,76,60,0.6);">🔒 Tarde bloqueada${bloqTarde.motivo ? ' · ' + bloqTarde.motivo : ''}</span>
+      </div>`;
+    }
+  }
+
   allSlots.forEach((m, i) => {
-    html += `<div style="position:absolute;top:${i*SLOT_H}px;left:0;right:0;height:${SLOT_H}px;border-bottom:1px solid var(--adm-border);display:flex;align-items:flex-start;">
-      <span style="width:75px;font-size:0.78rem;color:var(--adm-hint);font-weight:600;padding:6px 8px;flex-shrink:0;">${mStr(m)}</span>
+    // Horas fuera del horario laboral del día → tono más apagado
+    const esLaboral = rangosLaborales.some(([ini, fin]) => m >= ini && m < fin);
+    html += `<div style="position:absolute;top:${i*SLOT_H}px;left:0;right:0;height:${SLOT_H}px;border-bottom:1px solid ${esLaboral ? 'var(--adm-border)' : 'rgba(58,58,58,0.4)'};display:flex;align-items:flex-start;">
+      <span style="width:75px;font-size:0.78rem;color:${esLaboral ? 'var(--adm-hint)' : '#4A4A4A'};font-weight:600;padding:6px 8px;flex-shrink:0;">${mStr(m)}</span>
     </div>`;
   });
 
@@ -1672,7 +1679,7 @@ function renderAgenda() {
   });
 
   html += '</div>';
-  document.getElementById('agenda-slots').innerHTML = html;
+  document.getElementById('agenda-slots').innerHTML = banners + html;
 }
 
 function toggleSeñaPagadaAgenda(id) {
@@ -2134,24 +2141,10 @@ function actualizarHorasManual() {
     return;
   }
 
-  const diaSemana = new Date(fecha + 'T12:00').getDay();
-  const rangos = HDIAS[diaSemana] || [];
-  const t = TRATS[trat];
-
+  // Admin puede cargar en cualquier horario de 9 a 20hs (sin restricción de HDIAS)
   let html = '<option value="">— Elegí un horario —</option>';
-  let hayOpciones = false;
-  rangos.forEach(([inicio, fin]) => {
-    for (let m = inicio; m < fin; m += 30) {
-      // Verificar que el tratamiento cabe dentro del rango
-      if (m + t.dur <= fin) {
-        html += `<option value="${m}">${mStr(m)}</option>`;
-        hayOpciones = true;
-      }
-    }
-  });
-
-  if (!hayOpciones) {
-    html = '<option value="">— Sin horarios disponibles este día —</option>';
+  for (let m = 9*60; m < 20*60; m += 30) {
+    html += `<option value="${m}">${mStr(m)}</option>`;
   }
   sel.innerHTML = html;
 }
