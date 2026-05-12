@@ -1327,11 +1327,26 @@ function renderHorarios() {
 function esDisp(minI, k, fecha) {
   const t = TRATS[k];
   const fin = minI + t.dur;
-  
+
   const fecha2 = new Date(fecha + 'T12:00');
   const diaSemana = fecha2.getDay();
-  const rangos = HDIAS[diaSemana] || [];
-  
+  // Aplicar bloqueos igual que renderHorarios() para que la duración completa
+  // quede dentro del rango permitido (evita que un turno de 2hs a las 12:30
+  // se apruebe cuando la tarde está bloqueada desde las 13hs).
+  let rangos = HDIAS[diaSemana] || [];
+  const blqs = getBloqueos().filter(b => b.fecha === fecha);
+  const bloqM = blqs.find(b => b.tipo === 'mañana');
+  const bloqT = blqs.find(b => b.tipo === 'tarde');
+  if (bloqM || bloqT) {
+    rangos = rangos.map(([ini, finR]) => {
+      if (bloqM && finR <= 13*60) return null;
+      if (bloqM && ini < 13*60) return [13*60, finR];
+      if (bloqT && ini >= 13*60) return null;
+      if (bloqT && finR > 13*60) return [ini, 13*60];
+      return [ini, finR];
+    }).filter(Boolean);
+  }
+
   let dentroRango = false;
   for (const [inicio, finRango] of rangos) {
     if (minI >= inicio && fin <= finRango) {
