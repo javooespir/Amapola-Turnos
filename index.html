@@ -1291,10 +1291,19 @@ function renderHorarios() {
   const diaSemana = fecha.getDay();
   let rangos = HDIAS[diaSemana] || [];
 
-  // Aplicar bloqueos parciales de la admin
+  // Aplicar bloqueos de la admin
   const blqs = getBloqueos().filter(b => b.fecha === est.fecha);
+  const bloqTodo = blqs.find(b => b.tipo === 'todo');
   const bloqM = blqs.find(b => b.tipo === 'mañana');
   const bloqT = blqs.find(b => b.tipo === 'tarde');
+
+  // Día entero bloqueado: no mostrar ningún horario disponible
+  if (bloqTodo) {
+    document.getElementById('hs-grid').innerHTML =
+      '<p style="text-align:center;padding:1rem;color:#C0392B;font-size:0.9rem;">⚠️ Sin turnos disponibles este día.</p>';
+    return;
+  }
+
   if (bloqM || bloqT) {
     rangos = rangos.map(([ini,fin]) => {
       if (bloqM && fin <= 13*60) return null;
@@ -1335,6 +1344,7 @@ function esDisp(minI, k, fecha) {
   // se apruebe cuando la tarde está bloqueada desde las 13hs).
   let rangos = HDIAS[diaSemana] || [];
   const blqs = getBloqueos().filter(b => b.fecha === fecha);
+  if (blqs.some(b => b.tipo === 'todo')) return false;
   const bloqM = blqs.find(b => b.tipo === 'mañana');
   const bloqT = blqs.find(b => b.tipo === 'tarde');
   if (bloqM || bloqT) {
