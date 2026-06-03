@@ -595,13 +595,31 @@ p { line-height:1.6; margin-bottom:1rem; }
           </div>
           <div>
             <label style="font-size:0.8rem;color:var(--adm-hint);display:block;margin-bottom:0.3rem;">Tipo de bloqueo</label>
-            <select class="dk-in-dark" id="blq-tipo" style="margin:0;">
+            <select class="dk-in-dark" id="blq-tipo" style="margin:0;" onchange="mostrarCamposBloqueo()">
               <option value="">— Elegí —</option>
               <option value="todo">🚫 Todo el día</option>
               <option value="mañana">🌅 Solo mañana (hasta 13hs)</option>
               <option value="tarde">🌆 Solo tarde (desde 13hs)</option>
+              <option value="rango">⏰ Rango personalizado</option>
             </select>
           </div>
+        </div>
+        <!-- Campos para rango personalizado (ocultos por defecto) -->
+        <div id="blq-rango-campos" style="display:none;margin-bottom:0.8rem;padding:0.8rem;background:var(--adm-surface);border-radius:8px;border:1px solid var(--adm-border);">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.8rem;">
+            <div>
+              <label style="font-size:0.8rem;color:var(--adm-hint);display:block;margin-bottom:0.3rem;">Desde (hora)</label>
+              <input type="time" class="dk-in-dark" id="blq-rango-inicio" style="margin:0;">
+            </div>
+            <div>
+              <label style="font-size:0.8rem;color:var(--adm-hint);display:block;margin-bottom:0.3rem;">Hasta (hora)</label>
+              <input type="time" class="dk-in-dark" id="blq-rango-fin" style="margin:0;">
+            </div>
+          </div>
+          <label style="display:flex;align-items:center;gap:0.5rem;color:var(--adm-text);font-size:0.9rem;margin-bottom:0.8rem;">
+            <input type="checkbox" id="blq-repetir-viernes" style="cursor:pointer;">
+            Repetir todos los viernes a partir de ahora
+          </label>
         </div>
         <input type="text" class="dk-in-dark" id="blq-motivo" placeholder="Motivo (ej: Feriado, Vacaciones...)">
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
@@ -1296,6 +1314,7 @@ function renderHorarios() {
   const bloqTodo = blqs.find(b => b.tipo === 'todo');
   const bloqM = blqs.find(b => b.tipo === 'mañana');
   const bloqT = blqs.find(b => b.tipo === 'tarde');
+  const bloqRangos = blqs.filter(b => b.tipo === 'rango');
 
   // Día entero bloqueado: no mostrar ningún horario disponible
   if (bloqTodo) {
@@ -1314,6 +1333,32 @@ function renderHorarios() {
     }).filter(Boolean);
   }
 
+  // Aplicar bloqueos de rango personalizado
+  if (bloqRangos.length > 0) {
+    rangos = rangos.map(([ini, fin]) => {
+      let resultado = [[ini, fin]];
+      bloqRangos.forEach(bloq => {
+        const nuevoResultado = [];
+        resultado.forEach(([rIni, rFin]) => {
+          if (rFin <= bloq.hora_inicio || rIni >= bloq.hora_fin) {
+            // No se superpone
+            nuevoResultado.push([rIni, rFin]);
+          } else {
+            // Se superpone, dividir el rango
+            if (rIni < bloq.hora_inicio) {
+              nuevoResultado.push([rIni, bloq.hora_inicio]);
+            }
+            if (rFin > bloq.hora_fin) {
+              nuevoResultado.push([bloq.hora_fin, rFin]);
+            }
+          }
+        });
+        resultado = nuevoResultado;
+      });
+      return resultado;
+    }).flat().filter(r => r && r[0] < r[1]);
+  }
+
   // Calcular minutos actuales para bloquear horarios pasados si es hoy
   const esHoy = est.fecha === fISOlocal(new Date());
   const ahora = new Date();
@@ -1325,11 +1370,11 @@ function renderHorarios() {
       const yaPaso = esHoy && m <= minutosActuales;
       const disponible = !yaPaso && esDisp(m, est.trat, est.fecha);
       const selected = est.hora === m;
-      html += `<div class="hs-chip ${disponible ? '' : 'disabled'} ${selected ? 'selected' : ''}" 
+      html += `<div class="hs-chip ${disponible ? '' : 'disabled'} ${selected ? 'selected' : ''}"
                onclick="${disponible ? `selHora(${m})` : ''}">${mStr(m)}</div>`;
     }
   });
-  
+
   document.getElementById('hs-grid').innerHTML = html;
 }
 
@@ -1347,6 +1392,13 @@ function esDisp(minI, k, fecha) {
   if (blqs.some(b => b.tipo === 'todo')) return false;
   const bloqM = blqs.find(b => b.tipo === 'mañana');
   const bloqT = blqs.find(b => b.tipo === 'tarde');
+  const bloqRangos = blqs.filter(b => b.tipo === 'rango');
+
+  // Rechazar si el slot cae dentro de un rango bloqueado
+  if (bloqRangos.some(bloq => minI < bloq.hora_fin && fin > bloq.hora_inicio)) {
+    return false;
+  }
+
   if (bloqM || bloqT) {
     rangos = rangos.map(([ini, finR]) => {
       if (bloqM && finR <= 13*60) return null;
@@ -1725,23 +1777,140 @@ function agendaDiaSig() {
 
 // ── BLOQUEOS DE AGENDA ──
 
+function mostrarCamposBloqueo() {
+  const tipo = document.getElementById('blq-tipo').value;
+  document.getElementById('blq-rango-campos').style.display = tipo === 'rango' ? 'block' : 'none';
+}
+
 function bloquearAgenda() {
   const fecha  = document.getElementById('blq-fecha').value;
   const tipo   = document.getElementById('blq-tipo').value;
   const motivo = document.getElementById('blq-motivo').value.trim() || 'Bloqueado';
   if (!fecha || !tipo) { alert('Elegí fecha y tipo de bloqueo'); return; }
-  const bloqueos = getBloqueos().filter(b => !(b.fecha === fecha && b.tipo === tipo));
-  const nuevoBlq = { fecha, tipo, motivo, at: new Date().toISOString() };
-  bloqueos.push(nuevoBlq);
+
+  let bloqueos = getBloqueos().filter(b => !(b.fecha === fecha && b.tipo === tipo));
+
+  // Si es rango personalizado
+  if (tipo === 'rango') {
+    const horaInicio = document.getElementById('blq-rango-inicio').value;
+    const horaFin = document.getElementById('blq-rango-fin').value;
+    if (!horaInicio || !horaFin) { alert('Especificá hora de inicio y fin'); return; }
+
+    const [hI, mI] = horaInicio.split(':').map(Number);
+    const [hF, mF] = horaFin.split(':').map(Number);
+    const minInicio = hI * 60 + mI;
+    const minFin = hF * 60 + mF;
+
+    if (minFin <= minInicio) { alert('La hora de fin debe ser mayor que la de inicio'); return; }
+
+    const repetirViernes = document.getElementById('blq-repetir-viernes').checked;
+
+    if (repetirViernes) {
+      // Generar bloqueos para todos los próximos viernes (3 meses)
+      const fechaInicio = new Date(fecha);
+      const diaSemanaFecha = fechaInicio.getDay();
+
+      // Avanzar al próximo viernes si la fecha actual no es viernes
+      if (diaSemanaFecha !== 5) {
+        const diasAlViernes = (5 - diaSemanaFecha + 7) % 7;
+        fechaInicio.setDate(fechaInicio.getDate() + (diasAlViernes === 0 ? 7 : diasAlViernes));
+      }
+
+      // Generar bloqueos para los próximos 12 viernes
+      for (let i = 0; i < 12; i++) {
+        const fechaViernes = new Date(fechaInicio);
+        fechaViernes.setDate(fechaViernes.getDate() + i * 7);
+        const fechaISO = fISOlocal(fechaViernes);
+        // Remover bloqueos rango previos para este viernes
+        bloqueos = bloqueos.filter(b => !(b.fecha === fechaISO && b.tipo === 'rango'));
+        bloqueos.push({
+          fecha: fechaISO,
+          tipo: 'rango',
+          hora_inicio: minInicio,
+          hora_fin: minFin,
+          motivo,
+          at: new Date().toISOString()
+        });
+      }
+    } else {
+      // Bloqueo único para la fecha especificada
+      bloqueos.push({
+        fecha,
+        tipo: 'rango',
+        hora_inicio: minInicio,
+        hora_fin: minFin,
+        motivo,
+        at: new Date().toISOString()
+      });
+    }
+  } else {
+    const nuevoBlq = { fecha, tipo, motivo, at: new Date().toISOString() };
+    bloqueos.push(nuevoBlq);
+  }
+
   setBloqueos(bloqueos);
-  // Borrar primero por si ya existe (upsert manual)
-  sbDelete('bloqueos', 'fecha=eq.' + fecha + '&tipo=eq.' + tipo)
-    .then(() => sbInsert('bloqueos', { fecha, tipo, motivo, at: nuevoBlq.at }))
-    .catch(()=>{});
+
+  // Sincronizar a Supabase
+  if (tipo === 'rango') {
+    const horaInicio = document.getElementById('blq-rango-inicio').value;
+    const horaFin = document.getElementById('blq-rango-fin').value;
+    const [hI, mI] = horaInicio.split(':').map(Number);
+    const [hF, mF] = horaFin.split(':').map(Number);
+    const minInicio = hI * 60 + mI;
+    const minFin = hF * 60 + mF;
+    const repetirViernes = document.getElementById('blq-repetir-viernes').checked;
+
+    if (repetirViernes) {
+      // Guardar todos los bloqueos de viernes a Supabase
+      const fechaInicio = new Date(fecha);
+      const diaSemanaFecha = fechaInicio.getDay();
+      if (diaSemanaFecha !== 5) {
+        const diasAlViernes = (5 - diaSemanaFecha + 7) % 7;
+        fechaInicio.setDate(fechaInicio.getDate() + (diasAlViernes === 0 ? 7 : diasAlViernes));
+      }
+
+      const bloqueosSB = [];
+      for (let i = 0; i < 12; i++) {
+        const fechaViernes = new Date(fechaInicio);
+        fechaViernes.setDate(fechaViernes.getDate() + i * 7);
+        const fechaISO = fISOlocal(fechaViernes);
+        bloqueosSB.push({
+          fecha: fechaISO,
+          tipo: 'rango',
+          hora_inicio: minInicio,
+          hora_fin: minFin,
+          motivo,
+          at: new Date().toISOString()
+        });
+      }
+      sbInsert('bloqueos', bloqueosSB).catch(()=>{});
+      alert(`✅ Agenda bloqueada: rango personalizado todos los viernes (próximas 12 semanas)`);
+    } else {
+      sbInsert('bloqueos', [{
+        fecha,
+        tipo: 'rango',
+        hora_inicio: minInicio,
+        hora_fin: minFin,
+        motivo,
+        at: new Date().toISOString()
+      }]).catch(()=>{});
+      alert(`✅ Agenda bloqueada: rango personalizado (${horaInicio}-${horaFin}) del ${fecha}`);
+    }
+  } else {
+    const nuevoBlq = { fecha, tipo, motivo, at: new Date().toISOString() };
+    sbDelete('bloqueos', 'fecha=eq.' + fecha + '&tipo=eq.' + tipo)
+      .then(() => sbInsert('bloqueos', [nuevoBlq]))
+      .catch(()=>{});
+    alert(`✅ Agenda bloqueada: ${tipo === 'todo' ? 'todo el día' : tipo === 'mañana' ? 'solo mañana' : 'solo tarde'} del ${fecha}`);
+  }
+
   document.getElementById('blq-fecha').value = '';
   document.getElementById('blq-tipo').value = '';
   document.getElementById('blq-motivo').value = '';
-  alert(`✅ Agenda bloqueada: ${tipo === 'todo' ? 'todo el día' : tipo === 'mañana' ? 'solo mañana' : 'solo tarde'} del ${fecha}`);
+  document.getElementById('blq-rango-inicio').value = '';
+  document.getElementById('blq-rango-fin').value = '';
+  document.getElementById('blq-repetir-viernes').checked = false;
+  document.getElementById('blq-rango-campos').style.display = 'none';
   verBloqueos();
   renderAgenda();
 }
@@ -1755,10 +1924,27 @@ function verBloqueos() {
     contenedor.innerHTML = '<p style="font-size:0.85rem;color:var(--adm-hint);">No hay bloqueos activos</p>';
     return;
   }
-  const TIPOS = { todo:'🚫 Todo el día', mañana:'🌅 Mañana', tarde:'🌆 Tarde' };
+  const TIPOS = {
+    todo:'🚫 Todo el día',
+    mañana:'🌅 Mañana',
+    tarde:'🌆 Tarde',
+    rango:'⏰ Rango'
+  };
+
+  function formatearBloq(b) {
+    let label = `${b.fecha} · ${TIPOS[b.tipo]||b.tipo}`;
+    if (b.tipo === 'rango') {
+      const h1 = Math.floor(b.hora_inicio / 60), m1 = b.hora_inicio % 60;
+      const h2 = Math.floor(b.hora_fin / 60), m2 = b.hora_fin % 60;
+      label += ` (${h1}:${m1<10?'0':''}${m1} - ${h2}:${m2<10?'0':''}${m2})`;
+    }
+    label += ` · <em style="color:var(--adm-hint);">${b.motivo}</em>`;
+    return label;
+  }
+
   contenedor.innerHTML = activos.map(b => `
     <div style="display:flex;align-items:center;gap:0.5rem;background:var(--adm-surface);padding:0.5rem 0.8rem;border-radius:6px;margin-bottom:0.4rem;border-left:3px solid #E74C3C;">
-      <span style="font-size:0.85rem;color:var(--adm-text);flex:1;">${b.fecha} · ${TIPOS[b.tipo]||b.tipo} · <em style="color:var(--adm-hint);">${b.motivo}</em></span>
+      <span style="font-size:0.85rem;color:var(--adm-text);flex:1;">${formatearBloq(b)}</span>
       <button style="background:#7B2020;color:#FFF;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:0.78rem;" onclick="desbloquear('${b.fecha}','${b.tipo}')">✕</button>
     </div>`).join('');
 }
