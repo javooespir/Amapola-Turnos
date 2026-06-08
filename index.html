@@ -739,7 +739,7 @@ const SERVICIOS = [
   },
   {
     titulo: 'Peeling',
-    duracion: '1 hora 30 minutos',
+    duracion: '45 minutos',
     precio: 40000,
     descripcion: 'Consiste en una exfoliación química mediante ácidos para renovar la piel y darle lo que necesita: luminosidad, corregir manchas, hidratación, atenuar líneas de expresión, etc.'
   },
@@ -760,7 +760,7 @@ const TRATS = {
   pc:      { n:'Perfilado de cejas',                         dur:30,  precio:13000, camilla:'corta' },
   lac:     { n:'Laminado de cejas',                          dur:30,  precio:20000, camilla:'corta' },
   lc:      { n:'Limpieza facial profunda',                   dur:105, precio:35000, camilla:'exclusiva' },
-  peeling: { n:'Peeling',                                    dur:90,  precio:40000, camilla:'exclusiva' },
+  peeling: { n:'Peeling',                                    dur:45,  precio:40000, camilla:'exclusiva' },
   dl:      { n:'Drenaje linfático manual',                   dur:60,  precio:35000, camilla:'exclusiva' },
   combo1:  { n:'Combo: Lifting + Perfilado',                 dur:60,  precio:30000, camilla:'larga' },
   combo2:  { n:'Combo: Lifting + Laminado',                  dur:60,  precio:37000, camilla:'larga' },
@@ -943,7 +943,7 @@ function generarMensajeRecordatorio(tratN, tratK, fecha, hora, zonas=[]) {
     'pc':      '', // Sin instrucciones especiales
     'lac':     'Recordá venir sin maquillaje de cejas (en lo posible).\nLuego del tratamiento no podés mojarte ni maquillarte por 24hs.\nDuración aprox: 30/45 min.',
     'lc':      'Recordá venir sin maquillaje (en lo posible).\nEvitá el sol las próximas 48hs y reforzá la protección solar los días posteriores.\nDuración aprox: 1:30/45 hs.',
-    'peeling': 'No realizar actividad física el día del tratamiento.\nEvitá el sol los próximos días y reforzá la protección solar.\nDuración aprox: 1:30 hs.',
+    'peeling': 'No realizar actividad física el día del tratamiento.\nEvitá el sol los próximos días y reforzá la protección solar.\nDuración aprox: 30/45 min.',
     'dl':      'Vení con ropa cómoda, la zona a tratar debe estar descubierta.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '')
   };
 
