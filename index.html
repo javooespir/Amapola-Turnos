@@ -290,6 +290,35 @@ p { line-height:1.6; margin-bottom:1rem; }
   <div id="consulta-resultado"></div>
 </div>
 
+<!-- MODIFICAR TURNO -->
+<div id="p-modificar" class="page">
+  <button class="btn-volver" onclick="showPage('p-consulta')" title="Volver">&#8592;</button>
+  <svg class="logo-svg clickable-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" onclick="volverHome()">
+    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#7B2D2D" transform="rotate(0 50 50)"/>
+    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#8B3535" transform="rotate(60 50 50)"/>
+    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#7B2D2D" transform="rotate(120 50 50)"/>
+  </svg>
+  <h1>Modificar turno</h1>
+  <p class="slogan">Cambiá la fecha u horario cuando quieras</p>
+
+  <div class="card-box">
+    <h3>Tu turno actual</h3>
+    <div id="mod-turno-actual" style="background:var(--crema);padding:1rem;border-radius:8px;border-left:3px solid var(--dorado);"></div>
+  </div>
+
+  <div class="divider-line"><span>PRÓXIMOS PASOS</span></div>
+
+  <div class="card-box">
+    <p style="font-size:0.9rem;color:var(--texto-hint);margin-bottom:1rem;">Elige un nuevo turno. Si tu seña fue confirmada, se mantiene automáticamente (solo si es 24hs antes).</p>
+    <button class="btn-rojo" onclick="irDesdeModificar()">Elegir nuevo turno</button>
+  </div>
+
+  <div class="card-box">
+    <p style="font-size:0.9rem;color:var(--texto-hint);margin-bottom:1rem;">⚠️ Al cambiar tu turno, se borra el actual y se agenda el nuevo. El admin recibirá una notificación.</p>
+    <button class="btn-crema" onclick="showPage('p-consulta')">Cancelar modificación</button>
+  </div>
+</div>
+
 <!-- P1 DATOS -->
 <div id="p1" class="page">
   <button class="btn-volver" onclick="showPage('p-home')" title="Volver">&#8592;</button>
@@ -1041,9 +1070,53 @@ function cancelarTurnoCliente(id, nom, tratN) {
   
   setTurnos(turnos.filter(t => t.id !== id));
   sbDelete('turnos', 'id=eq.' + id).catch(function(){});
-  
+
   alert('Turno cancelado correctamente');
   buscarTurnos();
+}
+
+// MODIFICAR TURNO
+let turnoEnModificacion = null;
+
+function abrirModificarTurno(id, nom, ape, fecha, trat, tratN, hora, pagada, tel) {
+  turnoEnModificacion = { id, nom, ape, fecha, trat, tratN, hora, pagada, tel };
+
+  const fObj = new Date(fecha + 'T12:00');
+  const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const fStr = DIAS[fObj.getDay()] + ' ' + fObj.getDate() + ' de ' + MESES[fObj.getMonth()];
+
+  const tObj = TRATS[trat];
+  const precio = tObj ? tObj.precio : 0;
+
+  document.getElementById('mod-turno-actual').innerHTML =
+    '<strong>🌺 ' + tratN + '</strong><br>' +
+    '📅 ' + fStr + ' a las ' + mStr(hora) + ' hs<br>' +
+    '⏱️ Duración: ' + tObj.dur + ' min<br>' +
+    '💰 Total: $' + precio.toLocaleString() + '<br>' +
+    '<span style="display:inline-block;margin-top:0.5rem;padding:0.25rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:700;background:' + (pagada ? '#D4EDDA' : '#FFF3CD') + ';color:' + (pagada ? '#155724' : '#856404') + ';">' +
+      (pagada ? '✅ Seña confirmada' : '⚠️ Seña pendiente') +
+    '</span>';
+
+  showPage('p-modificar');
+}
+
+function irDesdeModificar() {
+  if (!turnoEnModificacion) return;
+
+  // Cargar los datos del turno en est
+  est = {
+    nom: turnoEnModificacion.nom,
+    ape: turnoEnModificacion.ape,
+    tel: turnoEnModificacion.tel,
+    trat: turnoEnModificacion.trat,
+    fecha: turnoEnModificacion.fecha,
+    hora: turnoEnModificacion.hora
+  };
+
+  // Ir a p2 (seleccionar fecha)
+  renderCalendario();
+  showPage('p2');
 }
 
 function showPage(id) {
@@ -1170,7 +1243,10 @@ async function buscarTurnos() {
         (pagada ? '✅ Seña confirmada' : '⚠️ Seña pendiente') +
       '</span>' +
       (!pagada ? '<br><a href="https://wa.me/5491159029792?text=' + encodeURIComponent(wpMsgComprobante) + '" target="_blank" style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.6rem;padding:0.5rem 1rem;background:#25D366;color:#FFF;border-radius:20px;text-decoration:none;font-size:0.85rem;font-weight:600;">📎 Enviar comprobante por WA</a>' : '') +
-      '<br><button onclick="cancelarTurnoCliente(\'' + t.id + '\',\'' + t.nom + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\')" style="margin-top:0.6rem;padding:0.5rem 1rem;background:#E74C3C;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">❌ Cancelar este turno</button>' +
+      '<br><div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem;">' +
+        '<button onclick="abrirModificarTurno(\'' + t.id + '\',\'' + t.nom.replace(/'/g, "\\'") + '\',\'' + t.ape.replace(/'/g, "\\'") + '\',\'' + t.fecha + '\',\'' + t.trat + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\',' + t.hora + ',' + (pagada ? 'true' : 'false') + ',\'' + t.tel + '\')" style="flex:1;padding:0.5rem 1rem;background:#B8975A;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">📝 Modificar turno</button>' +
+        '<button onclick="cancelarTurnoCliente(\'' + t.id + '\',\'' + t.nom + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\')" style="flex:1;padding:0.5rem 1rem;background:#E74C3C;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">❌ Cancelar</button>' +
+      '</div>' +
     '</div>';
   });
   
@@ -1304,10 +1380,25 @@ function selFecha(f) {
   document.getElementById('btn-conf').style.display = 'none';
 }
 
+// Overrides especiales para esta semana (8-12 junio)
+function getHDIASespecial(fecha_str) {
+  const fecha = new Date(fecha_str + 'T12:00');
+  const dia = fecha.getDate();
+  const mes = fecha.getMonth() + 1;
+  const diaSemana = fecha.getDay();
+
+  // Miércoles 10 junio y viernes 12 junio → 9-10:30 y 14-20:30
+  if (mes === 6 && ((diaSemana === 3 && dia === 10) || (diaSemana === 5 && dia === 12))) {
+    return [[9*60, 10.5*60], [14*60, 20.5*60]];
+  }
+
+  return HDIAS[diaSemana] || [];
+}
+
 function renderHorarios() {
   const fecha = new Date(est.fecha + 'T12:00');
   const diaSemana = fecha.getDay();
-  let rangos = HDIAS[diaSemana] || [];
+  let rangos = getHDIASespecial(est.fecha);
 
   // Aplicar bloqueos de la admin
   const blqs = getBloqueos().filter(b => b.fecha === est.fecha);
@@ -1387,7 +1478,7 @@ function esDisp(minI, k, fecha) {
   // Aplicar bloqueos igual que renderHorarios() para que la duración completa
   // quede dentro del rango permitido (evita que un turno de 2hs a las 12:30
   // se apruebe cuando la tarde está bloqueada desde las 13hs).
-  let rangos = HDIAS[diaSemana] || [];
+  let rangos = getHDIASespecial(fecha);
   const blqs = getBloqueos().filter(b => b.fecha === fecha);
   if (blqs.some(b => b.tipo === 'todo')) return false;
   const bloqM = blqs.find(b => b.tipo === 'mañana');
@@ -1483,8 +1574,23 @@ async function irFin() {
   const t = TRATS[est.trat];
   const precio = getPrecio();
 
+  // Detectar si es modificación
+  const esModificacion = turnoEnModificacion !== null;
+  const turnoAnterior = esModificacion ? turnoEnModificacion : null;
+
+  // Determinar seña: mantener si es 24hs antes, sino nueva
+  let señaPagada = false;
+  if (esModificacion && turnoAnterior.pagada) {
+    const ahora = new Date();
+    const turnoFecha = new Date(turnoAnterior.fecha + 'T12:00');
+    const diasFalta = (turnoFecha - ahora) / (1000 * 60 * 60 * 24);
+    if (diasFalta >= 1) {
+      señaPagada = true; // Mantener seña confirmada
+    }
+  }
+
   const turno = {
-    id: Date.now().toString(),
+    id: esModificacion ? turnoAnterior.id : Date.now().toString(),
     nom: est.cliente.nom,
     ape: est.cliente.ape,
     tel: est.cliente.tel,
@@ -1494,7 +1600,7 @@ async function irFin() {
     hora: est.hora,
     precio,
     seña: 10000,
-    señaPagada: false,
+    señaPagada: señaPagada,
     zonas: est.zonas,
     notas: '',
     origen: 'web',
@@ -1510,12 +1616,22 @@ async function irFin() {
     id: turno.id, nom: turno.nom, ape: turno.ape, tel: turno.tel,
     trat: turno.trat, "tratN": turno.tratN, fecha: turno.fecha,
     hora: turno.hora, precio: turno.precio, "seña": turno.seña,
-    "señaPagada": false, zonas: turno.zonas, notas: turno.notas,
+    "señaPagada": turno.señaPagada, zonas: turno.zonas, notas: turno.notas,
     origen: turno.origen, at: turno.at
   };
 
   let sbOk = false;
-  try { sbOk = await sbInsert('turnos', sbData); } catch(e) { sbOk = false; }
+  if (esModificacion) {
+    // Actualizar turno existente
+    try { sbOk = await fetch(SB_URL + '/rest/v1/turnos?id=eq.' + turnoAnterior.id, {
+      method: 'PATCH',
+      headers: { ...SB_HDR, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(sbData)
+    }).then(r => r.ok); } catch(e) { sbOk = false; }
+  } else {
+    // Insertar turno nuevo
+    try { sbOk = await sbInsert('turnos', sbData); } catch(e) { sbOk = false; }
+  }
 
   if (!sbOk) {
     // Restaurar botón y mostrar error claro
@@ -1526,7 +1642,14 @@ async function irFin() {
 
   // Guardado OK → actualizar cache local
   const turnos = getTurnos();
-  turnos.push(turno);
+  if (esModificacion) {
+    // Reemplazar turno antiguo
+    const idx = turnos.findIndex(t => t.id === turnoAnterior.id);
+    if (idx >= 0) turnos[idx] = turno;
+  } else {
+    // Agregar turno nuevo
+    turnos.push(turno);
+  }
   setTurnos(turnos);
 
   // Enviar email de notificación
@@ -1534,6 +1657,19 @@ async function irFin() {
   const MESES3 = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const f = new Date(est.fecha + 'T12:00');
   const fechaFormato = DIAS3[f.getDay()] + ' ' + f.getDate() + ' de ' + MESES3[f.getMonth()];
+
+  if (esModificacion) {
+    // Notificar admin de modificación
+    const fAnterior = new Date(turnoAnterior.fecha + 'T12:00');
+    const fechaAnterior = DIAS3[fAnterior.getDay()] + ' ' + fAnterior.getDate() + ' de ' + MESES3[fAnterior.getMonth()];
+    const msgAdmin = `🔄 TURNO MODIFICADO\n\nCliente: ${turnoAnterior.nom} ${turnoAnterior.ape}\nTeléfono: ${turnoAnterior.tel}\n\n📅 ANTES: ${fechaAnterior} a las ${mStr(turnoAnterior.hora)} hs (${turnoAnterior.tratN})\n📅 AHORA: ${fechaFormato} a las ${mStr(est.hora)} hs (${t.n})\n\nSeña: ${turnoAnterior.pagada ? '✅ Confirmada (se mantiene)' : '❌ Pendiente (nueva seña)'}`;
+    fetch(SB_URL + '/rest/v1/notificaciones', {
+      method: 'POST',
+      headers: SB_HDR,
+      body: JSON.stringify({ tipo: 'modificacion_turno', contenido: msgAdmin, at: new Date().toISOString() })
+    }).catch(()=>{});
+  }
+
   enviarEmailTurno(est.cliente.nom, est.cliente.ape, est.cliente.tel, t.n, fechaFormato, mStr(est.hora), precio);
 
   const fObj = new Date(est.fecha + 'T12:00');
@@ -1559,7 +1695,9 @@ async function irFin() {
 
   showPage('p-fin');
 
+  // Limpiar estado
   est = { cliente:{}, trat:'', zonas:[], fecha:null, hora:null, mesAct:new Date() };
+  turnoEnModificacion = null;
   document.getElementById('inp-nombre').value = '';
   document.getElementById('inp-apellido').value = '';
   document.getElementById('inp-tel').value = '';
@@ -1652,7 +1790,7 @@ function renderAgenda() {
   for (let m = 9*60; m < 20*60; m += 30) allSlots.push(m);
 
   // Rangos laborales del día (para diferenciar visualmente horas de trabajo)
-  const rangosLaborales = HDIAS[diaSemana] || [];
+  const rangosLaborales = getHDIASespecial(fechaISO);
 
   const turnos = getTurnos().filter(t => t.fecha === fechaISO);
 
@@ -1964,9 +2102,10 @@ function calcularSlotsDisponibles(d) {
   const fechaISO = fISOlocal(d);
   const bloqueos = getBloqueos().filter(b => b.fecha === fechaISO);
   const bloqTodo = bloqueos.find(b => b.tipo === 'todo');
-  if (bloqTodo || dSem === 0 || !HDIAS[dSem] || HDIAS[dSem].length === 0) return null;
+  const rangosEspecial = getHDIASespecial(fechaISO);
+  if (bloqTodo || dSem === 0 || !rangosEspecial || rangosEspecial.length === 0) return null;
 
-  let rangos = HDIAS[dSem] || [];
+  let rangos = rangosEspecial;
   const bloqMañana = bloqueos.find(b => b.tipo === 'mañana');
   const bloqTarde  = bloqueos.find(b => b.tipo === 'tarde');
   if (bloqMañana || bloqTarde) {
@@ -2009,7 +2148,8 @@ function generarImagenTurnos() {
     const dSem = cur.getDay();
     const fechaISO = fISOlocal(cur);
     const bloqTodo = getBloqueos().some(b => b.fecha === fechaISO && b.tipo === 'todo');
-    if (dSem !== 0 && !bloqTodo && HDIAS[dSem] && HDIAS[dSem].length > 0) {
+    const rangosEspecial = getHDIASespecial(fechaISO);
+    if (dSem !== 0 && !bloqTodo && rangosEspecial && rangosEspecial.length > 0) {
       dias.push(new Date(cur));
     }
     cur.setDate(cur.getDate() + 1);
