@@ -1078,14 +1078,18 @@ function cancelarTurnoCliente(id, nom, tratN) {
 // MODIFICAR TURNO
 let turnoEnModificacion = null;
 
-function abrirModificarTurno(id, nom, ape, fecha, trat, tratN, hora, pagada, tel) {
-  console.log('abrirModificarTurno called:', {id, nom, ape, fecha, trat, tratN, hora, pagada, tel});
+function abrirModificarTurno(id, nom, ape, fecha, trat, tratN, horaStr, pagadaStr, tel) {
+  console.log('abrirModificarTurno called:', {id, nom, ape, fecha, trat, tratN, horaStr, pagadaStr, tel});
 
   if (!id || !nom || !ape || !fecha || !trat) {
     console.error('Parámetros faltantes:', {id, nom, ape, fecha, trat});
     alert('Error cargando datos del turno. Refresca la página e intenta nuevamente.');
     return;
   }
+
+  // Convertir hora string a número
+  const hora = parseInt(horaStr) || 0;
+  const pagada = pagadaStr === 'si';
 
   turnoEnModificacion = { id, nom, ape, fecha, trat, tratN, hora, pagada, tel };
   console.log('turnoEnModificacion seteado:', turnoEnModificacion);
@@ -1098,6 +1102,7 @@ function abrirModificarTurno(id, nom, ape, fecha, trat, tratN, hora, pagada, tel
 
     const tObj = TRATS[trat];
     if (!tObj) {
+      console.error('TRATS[' + trat + '] no encontrado. Tratamientos disponibles:', Object.keys(TRATS));
       alert('Tratamiento no encontrado. Refresca e intenta nuevamente.');
       return;
     }
@@ -1114,6 +1119,7 @@ function abrirModificarTurno(id, nom, ape, fecha, trat, tratN, hora, pagada, tel
         (pagada ? '✅ Seña confirmada' : '⚠️ Seña pendiente') +
       '</span>';
 
+    console.log('Mostrando página p-modificar...');
     showPage('p-modificar');
   } catch(e) {
     console.error('Error en abrirModificarTurno:', e);
@@ -1264,7 +1270,7 @@ async function buscarTurnos() {
       '</span>' +
       (!pagada ? '<br><a href="https://wa.me/5491159029792?text=' + encodeURIComponent(wpMsgComprobante) + '" target="_blank" style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.6rem;padding:0.5rem 1rem;background:#25D366;color:#FFF;border-radius:20px;text-decoration:none;font-size:0.85rem;font-weight:600;">📎 Enviar comprobante por WA</a>' : '') +
       '<br><div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem;">' +
-        '<button onclick="abrirModificarTurno(\'' + t.id + '\',\'' + t.nom.replace(/'/g, "\\'") + '\',\'' + t.ape.replace(/'/g, "\\'") + '\',\'' + t.fecha + '\',\'' + t.trat + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\',' + t.hora + ',' + (pagada ? 'true' : 'false') + ',\'' + t.tel + '\')" style="flex:1;padding:0.5rem 1rem;background:#B8975A;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">📝 Modificar turno</button>' +
+        '<button onclick="abrirModificarTurno(\'' + t.id + '\',\'' + t.nom.replace(/'/g, "\\'") + '\',\'' + t.ape.replace(/'/g, "\\'") + '\',\'' + t.fecha + '\',\'' + t.trat + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\',\'' + t.hora + '\',\'' + (pagada ? 'si' : 'no') + '\',\'' + t.tel.replace(/'/g, "\\'") + '\')" style="flex:1;padding:0.5rem 1rem;background:#B8975A;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">📝 Modificar turno</button>' +
         '<button onclick="cancelarTurnoCliente(\'' + t.id + '\',\'' + t.nom + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\')" style="flex:1;padding:0.5rem 1rem;background:#E74C3C;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">❌ Cancelar</button>' +
       '</div>' +
     '</div>';
