@@ -1130,19 +1130,24 @@ function abrirModificarTurno(id, nom, ape, fecha, trat, tratN, horaStr, pagadaSt
 function irDesdeModificar() {
   if (!turnoEnModificacion) return;
 
-  // Cargar los datos del turno en est
-  est = {
-    nom: turnoEnModificacion.nom,
-    ape: turnoEnModificacion.ape,
-    tel: turnoEnModificacion.tel,
-    trat: turnoEnModificacion.trat,
-    fecha: turnoEnModificacion.fecha,
-    hora: turnoEnModificacion.hora
-  };
+  console.log('irDesdeModificar: iniciando flujo de modificación');
 
-  // Ir a p2 (seleccionar fecha)
-  renderCalendario();
+  // Cargar los datos del turno en est
+  // Mantener mesAct como está para mostrar mes actual
+  est.nom = turnoEnModificacion.nom;
+  est.ape = turnoEnModificacion.ape;
+  est.tel = turnoEnModificacion.tel;
+  est.trat = turnoEnModificacion.trat;
+  est.fecha = turnoEnModificacion.fecha;
+  est.hora = turnoEnModificacion.hora;
+
+  console.log('est actualizado:', est);
+
+  // Renderizar calendario y mostrar p2
+  renderCal();
   showPage('p2');
+
+  console.log('Página p2 mostrada');
 }
 
 function showPage(id) {
@@ -1231,12 +1236,18 @@ async function buscarTurnos() {
   // Filtrar por teléfono flexible: comparar solo los últimos 8 dígitos
   // El tel guardado puede ser "+5491159029792", el ingresado "1159029792"
   const telDigits = tel.replace(/\D/g,'');
-  const turnos = allTurnos.filter(t => {
+  let turnos = allTurnos.filter(t => {
     const tDigits = (t.tel || '').replace(/\D/g,'');
     // Match si los últimos dígitos ingresados coinciden
     return tDigits.endsWith(telDigits) || telDigits.endsWith(tDigits) || tDigits === telDigits;
   });
-  
+
+  // Si no encuentra por tel exacto, mostrar por nombre+apellido igual (tolerar tel diferente)
+  if (turnos.length === 0 && allTurnos.length > 0) {
+    console.warn('Tel no coincide. Mostrando turnos por nombre+apellido:', allTurnos);
+    turnos = allTurnos;
+  }
+
   if (turnos.length === 0) {
     resultado.innerHTML = `
       <div class="consulta-result">
