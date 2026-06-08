@@ -1079,26 +1079,46 @@ function cancelarTurnoCliente(id, nom, tratN) {
 let turnoEnModificacion = null;
 
 function abrirModificarTurno(id, nom, ape, fecha, trat, tratN, hora, pagada, tel) {
+  console.log('abrirModificarTurno called:', {id, nom, ape, fecha, trat, tratN, hora, pagada, tel});
+
+  if (!id || !nom || !ape || !fecha || !trat) {
+    console.error('Parámetros faltantes:', {id, nom, ape, fecha, trat});
+    alert('Error cargando datos del turno. Refresca la página e intenta nuevamente.');
+    return;
+  }
+
   turnoEnModificacion = { id, nom, ape, fecha, trat, tratN, hora, pagada, tel };
+  console.log('turnoEnModificacion seteado:', turnoEnModificacion);
 
-  const fObj = new Date(fecha + 'T12:00');
-  const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const fStr = DIAS[fObj.getDay()] + ' ' + fObj.getDate() + ' de ' + MESES[fObj.getMonth()];
+  try {
+    const fObj = new Date(fecha + 'T12:00');
+    const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const fStr = DIAS[fObj.getDay()] + ' ' + fObj.getDate() + ' de ' + MESES[fObj.getMonth()];
 
-  const tObj = TRATS[trat];
-  const precio = tObj ? tObj.precio : 0;
+    const tObj = TRATS[trat];
+    if (!tObj) {
+      alert('Tratamiento no encontrado. Refresca e intenta nuevamente.');
+      return;
+    }
 
-  document.getElementById('mod-turno-actual').innerHTML =
-    '<strong>🌺 ' + tratN + '</strong><br>' +
-    '📅 ' + fStr + ' a las ' + mStr(hora) + ' hs<br>' +
-    '⏱️ Duración: ' + tObj.dur + ' min<br>' +
-    '💰 Total: $' + precio.toLocaleString() + '<br>' +
-    '<span style="display:inline-block;margin-top:0.5rem;padding:0.25rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:700;background:' + (pagada ? '#D4EDDA' : '#FFF3CD') + ';color:' + (pagada ? '#155724' : '#856404') + ';">' +
-      (pagada ? '✅ Seña confirmada' : '⚠️ Seña pendiente') +
-    '</span>';
+    const duracion = tObj.dur || 30;
+    const precio = tObj.precio || 0;
 
-  showPage('p-modificar');
+    document.getElementById('mod-turno-actual').innerHTML =
+      '<strong>🌺 ' + tratN + '</strong><br>' +
+      '📅 ' + fStr + ' a las ' + mStr(hora) + ' hs<br>' +
+      '⏱️ Duración: ' + duracion + ' min<br>' +
+      '💰 Total: $' + precio.toLocaleString() + '<br>' +
+      '<span style="display:inline-block;margin-top:0.5rem;padding:0.25rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:700;background:' + (pagada ? '#D4EDDA' : '#FFF3CD') + ';color:' + (pagada ? '#155724' : '#856404') + ';">' +
+        (pagada ? '✅ Seña confirmada' : '⚠️ Seña pendiente') +
+      '</span>';
+
+    showPage('p-modificar');
+  } catch(e) {
+    console.error('Error en abrirModificarTurno:', e);
+    alert('Error inesperado. Intenta nuevamente.');
+  }
 }
 
 function irDesdeModificar() {
