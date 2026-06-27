@@ -352,7 +352,13 @@ p { line-height:1.6; margin-bottom:1rem; }
       <input type="tel" class="dk-in phone-input" id="inp-tel" placeholder="Teléfono (8-10 dígitos)" maxlength="10" onkeypress="return /[0-9]/.test(event.key)" onkeydown="if(event.key==='Enter')irPag2()">
     </div>
     <div style="color:#E74C3C;font-size:0.8rem;display:none;margin-top:-0.5rem;" id="err-tel">El teléfono debe tener entre 8 y 10 dígitos</div>
-    
+
+    <div style="position:relative;margin-top:0.2rem;">
+      <input type="email" class="dk-in" id="inp-email" placeholder="Email (opcional)" style="padding-right:2.5rem;">
+      <span style="position:absolute;right:0.8rem;top:50%;transform:translateY(-50%);font-size:0.75rem;color:var(--dorado);font-weight:600;pointer-events:none;">OPT</span>
+    </div>
+    <p style="font-size:0.78rem;color:var(--texto-hint);margin-top:-0.4rem;margin-bottom:0.8rem;text-align:center;">✉️ Si ingresás tu email te mandamos la confirmación del turno</p>
+
     <button class="btn-rojo" onclick="irPag2()">Continuar</button>
   </div>
 </div>
@@ -1034,7 +1040,7 @@ function abrirWAAdmin(tel, msg) {
 }
 
 
-async function enviarEmailTurno(nom, ape, tel, tratN, fecha, hora, precio) {
+async function enviarEmailTurno(nom, ape, tel, tratN, fecha, hora, precio, emailCliente) {
   try {
     const response = await fetch('https://brtuieevrokgxreypyox.supabase.co/functions/v1/swift-function', {
       method: 'POST',
@@ -1043,7 +1049,7 @@ async function enviarEmailTurno(nom, ape, tel, tratN, fecha, hora, precio) {
         'apikey': SB_KEY,
         'Authorization': 'Bearer ' + SB_KEY
       },
-      body: JSON.stringify({ nom, ape, tel, tratN, fecha, hora, precio })
+      body: JSON.stringify({ nom, ape, tel, tratN, fecha, hora, precio, emailCliente: emailCliente || null })
     });
     if (!response.ok) {
       const err = await response.text();
@@ -1314,7 +1320,8 @@ function irPag2() {
   }
   
   document.getElementById('err-tel').style.display = 'none';
-  est.cliente = { nom, ape, tel: pais + tel };
+  const email = document.getElementById('inp-email').value.trim();
+  est.cliente = { nom, ape, tel: pais + tel, email: email || null };
   document.getElementById('saludo-hdr').textContent = 'Hola, ' + nom + ' 👋';
   showPage('p2');
 }
@@ -1462,23 +1469,20 @@ function renderHorarios() {
   }
 
   // Aplicar bloqueos de rango personalizado
-  if (bloqRangos.length > 0) {
+  const bloqRangosValidos = bloqRangos.filter(b => b.hora_inicio != null && b.hora_fin != null);
+  if (bloqRangosValidos.length > 0) {
     rangos = rangos.map(([ini, fin]) => {
       let resultado = [[ini, fin]];
-      bloqRangos.forEach(bloq => {
+      bloqRangosValidos.forEach(bloq => {
+        const bIni = Number(bloq.hora_inicio);
+        const bFin = Number(bloq.hora_fin);
         const nuevoResultado = [];
         resultado.forEach(([rIni, rFin]) => {
-          if (rFin <= bloq.hora_inicio || rIni >= bloq.hora_fin) {
-            // No se superpone
+          if (rFin <= bIni || rIni >= bFin) {
             nuevoResultado.push([rIni, rFin]);
           } else {
-            // Se superpone, dividir el rango
-            if (rIni < bloq.hora_inicio) {
-              nuevoResultado.push([rIni, bloq.hora_inicio]);
-            }
-            if (rFin > bloq.hora_fin) {
-              nuevoResultado.push([bloq.hora_fin, rFin]);
-            }
+            if (rIni < bIni) nuevoResultado.push([rIni, bIni]);
+            if (rFin > bFin) nuevoResultado.push([bFin, rFin]);
           }
         });
         resultado = nuevoResultado;
@@ -1523,9 +1527,12 @@ function esDisp(minI, k, fecha) {
   const bloqRangos = blqs.filter(b => b.tipo === 'rango');
 
   // Rechazar si el slot cae dentro de un rango bloqueado
-  if (bloqRangos.some(bloq => minI < bloq.hora_fin && fin > bloq.hora_inicio)) {
-    return false;
-  }
+  if (bloqRangos.some(bloq => {
+    if (bloq.hora_inicio == null || bloq.hora_fin == null) return false;
+    const bIni = Number(bloq.hora_inicio);
+    const bFin = Number(bloq.hora_fin);
+    return minI < bFin && fin > bIni;
+  })) return false;
 
   if (bloqM || bloqT) {
     rangos = rangos.map(([ini, finR]) => {
@@ -1707,7 +1714,7 @@ async function irFin() {
     }).catch(()=>{});
   }
 
-  enviarEmailTurno(est.cliente.nom, est.cliente.ape, est.cliente.tel, t.n, fechaFormato, mStr(est.hora), precio);
+  enviarEmailTurno(est.cliente.nom, est.cliente.ape, est.cliente.tel, t.n, fechaFormato, mStr(est.hora), precio, est.cliente.email);
 
   const fObj = new Date(est.fecha + 'T12:00');
   const DIAS2 = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
