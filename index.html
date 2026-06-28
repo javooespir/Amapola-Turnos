@@ -1836,10 +1836,23 @@ function cambiarTab(tab) {
   if (tab === 'turnos') renderListaTurnos();
   if (tab === 'papelera') renderPapelera();
   if (tab === 'config') renderConfig();
-  if (tab === 'estadisticas') renderEstadisticas();
+  if (tab === 'estadisticas') cargarYRenderEstadisticas();
 }
 
 // ESTADÍSTICAS
+async function cargarYRenderEstadisticas() {
+  document.getElementById('stats-financiero').innerHTML = '<p style="color:var(--adm-hint);font-size:0.85rem;">Cargando...</p>';
+  // Traer TODOS los turnos históricos (sin filtro de fecha)
+  try {
+    const data = await sbGet('turnos', 'order=fecha.asc');
+    if (data && data.length > 0) {
+      _turnosCache = data;
+      localStorage.setItem('amp_t', JSON.stringify(data));
+    }
+  } catch(e) { console.error('Error cargando histórico:', e); }
+  renderEstadisticas();
+}
+
 function renderEstadisticas() {
   const todos = getTurnos();
   const buscar = (document.getElementById('stats-buscar')?.value || '').toLowerCase().trim();
