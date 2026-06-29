@@ -465,8 +465,10 @@ p { line-height:1.6; margin-bottom:1rem; }
     <h2 style="margin-bottom:1rem;">Resumen del turno</h2>
     <div id="resumen-box" style="line-height:1.8;margin-bottom:1.5rem;"></div>
     
-    <div style="background:#FFF3CD;padding:1rem;border-radius:8px;border-left:4px solid #FFC107;margin-bottom:1rem;font-size:0.9rem;">
-      <strong>Importante:</strong> Para confirmar tu turno, transferí la seña de <strong id="monto-num"></strong> al siguiente alias:
+    <div style="background:#FFF3CD;padding:1.2rem 1rem;border-radius:8px;border:2px solid #FFC107;margin-bottom:1rem;text-align:center;">
+      <p style="font-size:1.05rem;font-weight:700;color:#333;margin:0 0 0.3rem;">IMPORTANTE: Para terminar de realizar la reserva, transferí la seña de <span id="monto-num" style="color:var(--rojo);"></span> al siguiente alias:</p>
+      <p style="font-size:1.35rem;font-weight:900;color:var(--rojo);letter-spacing:0.06em;margin:0.4rem 0;">CATASAGAR</p>
+      <p style="font-size:0.95rem;font-weight:800;color:#c0392b;margin:0;">DE NO ABONAR LA SEÑA, EL TURNO NO QUEDA RESERVADO</p>
     </div>
     <div style="background:#FFF;border:2.5px solid var(--rojo);border-radius:14px;padding:1.2rem 1rem;margin-bottom:1.5rem;text-align:center;">
       <div style="font-size:0.75rem;color:var(--texto-hint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.3rem;font-weight:600;">Alias de transferencia</div>
@@ -773,6 +775,12 @@ p { line-height:1.6; margin-bottom:1rem; }
         <div id="precios-editor"></div>
         <button class="btn-rojo-sm" style="margin-top:1rem;" onclick="guardarPrecios()">Guardar precios</button>
       </div>
+      <div class="config-section-dark">
+        <h3>Mensajes de confirmación (WhatsApp)</h3>
+        <p style="font-size:0.8rem;color:var(--adm-hint);margin-bottom:0.8rem;">Instrucciones que se envían por WA al recordar cada turno. Dejá vacío para usar el texto por defecto.</p>
+        <div id="mensajes-editor"></div>
+        <button class="btn-rojo-sm" style="margin-top:1rem;" onclick="guardarMensajes()">Guardar mensajes</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1049,8 +1057,11 @@ function generarMensajeRecordatorio(tratN, tratK, fecha, hora, zonas=[]) {
     'combo10': 'Venir sin maquillaje, máscara de pestañas ni maquillaje de cejas, y con ropa cómoda ya que la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte pestañas ni cejas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '') + '\nDuración aprox: 2 horas y media.'
   };
 
+  const customMsgs = getCfgMensajes();
   let instrucciones = '';
-  if (tratK.startsWith('combo')) {
+  if (customMsgs[tratK] !== undefined && customMsgs[tratK] !== '') {
+    instrucciones = customMsgs[tratK];
+  } else if (tratK.startsWith('combo')) {
     instrucciones = combos[tratK] || '';
   } else {
     instrucciones = individual[tratK] || '';
@@ -2818,6 +2829,7 @@ function renderConfig() {
     </div>`;
   });
   document.getElementById('precios-editor').innerHTML = html;
+  renderMensajesEditor();
 }
 
 async function guardarConfig() {
@@ -2858,6 +2870,53 @@ async function guardarPrecios() {
   } catch(e) {
     alert('Precios guardados localmente (sin conexión)');
   }
+}
+
+// MENSAJES CONFIRMATORIOS
+const MSGS_LABELS = {
+  lp:      'Lifting de Pestañas',
+  pc:      'Perfilado de Cejas',
+  lac:     'Laminado de Cejas',
+  lc:      'Limpieza Facial Profunda',
+  peeling: 'Peeling',
+  dl:      'Drenaje Linfático',
+  combo1:  'Combo: Lifting + Perfilado',
+  combo2:  'Combo: Lifting + Laminado',
+  combo3:  'Combo: Limpieza + Lifting',
+  combo4:  'Combo: Limpieza + Perfilado',
+  combo5:  'Combo: Limpieza + Drenaje',
+  combo6:  'Combo: Lifting + Drenaje',
+  combo7:  'Combo: Limpieza + Lifting + Perfilado',
+  combo8:  'Combo: Limpieza + Lifting + Laminado',
+  combo9:  'Combo: Limpieza + Lifting + Drenaje + Perfilado',
+  combo10: 'Combo: Limpieza + Lifting + Drenaje + Laminado'
+};
+
+const getCfgMensajes = () => { try { return JSON.parse(localStorage.getItem('amp_msgs') || '{}'); } catch { return {}; } };
+const setCfgMensajes = (m) => localStorage.setItem('amp_msgs', JSON.stringify(m));
+
+function renderMensajesEditor() {
+  const custom = getCfgMensajes();
+  let html = '';
+  Object.entries(MSGS_LABELS).forEach(([k, label]) => {
+    html += `<div class="config-item" style="margin-bottom:0.8rem;">
+      <label style="display:block;margin-bottom:0.3rem;font-size:0.85rem;color:var(--adm-text);">${label}</label>
+      <textarea class="dk-in-dark" id="msg-${k}" rows="3"
+        style="width:100%;font-size:0.8rem;resize:vertical;line-height:1.5;font-family:inherit;"
+        placeholder="Dejar vacío para usar texto por defecto">${custom[k] !== undefined ? custom[k] : ''}</textarea>
+    </div>`;
+  });
+  document.getElementById('mensajes-editor').innerHTML = html;
+}
+
+function guardarMensajes() {
+  const msgs = {};
+  Object.keys(MSGS_LABELS).forEach(k => {
+    const el = document.getElementById('msg-' + k);
+    if (el) msgs[k] = el.value.trim();
+  });
+  setCfgMensajes(msgs);
+  alert('Mensajes guardados ✓');
 }
 
 // EXPORTAR ICS
