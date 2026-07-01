@@ -1440,7 +1440,8 @@ function renderCal() {
     // Verificar bloqueos activos
     const blqs = getBloqueos().filter(b => b.fecha === fStr);
     const blqTodo = blqs.some(b => b.tipo === 'todo');
-    const disabled = fecha < hoy || diaSemana === 0 || !HDIAS[diaSemana] || HDIAS[diaSemana].length === 0 || blqTodo;
+    const rangosDelDia = getHDIASespecial(fStr);
+    const disabled = fecha < hoy || diaSemana === 0 || !rangosDelDia || rangosDelDia.length === 0 || blqTodo;
     const selected = est.fecha === fStr;
     
     html += `<div class="cal-cell ${disabled ? 'disabled' : ''} ${selected ? 'selected' : ''}" 
@@ -2233,7 +2234,8 @@ function bloquearAgenda() {
         });
       }
     } else {
-      // Bloqueo único para la fecha especificada
+      // Bloqueo único — remover cualquier rango previo para esa fecha en local
+      bloqueos = bloqueos.filter(b => !(b.fecha === fecha && b.tipo === 'rango'));
       bloqueos.push({
         fecha,
         tipo: 'rango',
@@ -2286,14 +2288,17 @@ function bloquearAgenda() {
       sbInsert('bloqueos', bloqueosSB).catch(()=>{});
       alert(`✅ Agenda bloqueada: rango personalizado todos los viernes (próximas 12 semanas)`);
     } else {
-      sbInsert('bloqueos', [{
-        fecha,
-        tipo: 'rango',
-        hora_inicio: minInicio,
-        hora_fin: minFin,
-        motivo,
-        at: new Date().toISOString()
-      }]).catch(()=>{});
+      // Borrar cualquier rango previo para esa fecha en Supabase antes de insertar
+      sbDelete('bloqueos', 'fecha=eq.' + fecha + '&tipo=eq.rango')
+        .then(() => sbInsert('bloqueos', [{
+          fecha,
+          tipo: 'rango',
+          hora_inicio: minInicio,
+          hora_fin: minFin,
+          motivo,
+          at: new Date().toISOString()
+        }]))
+        .catch(()=>{});
       alert(`✅ Agenda bloqueada: rango personalizado (${horaInicio}-${horaFin}) del ${fecha}`);
     }
   } else {
