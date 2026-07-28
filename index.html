@@ -386,7 +386,7 @@ p { line-height:1.6; margin-bottom:1rem; }
       <option value="">— Seleccioná —</option>
       <option value="lp">Lifting de pestañas</option>
       <option value="pc">Perfilado de cejas</option>
-      <option value="lac">Laminado de cejas</option>
+      <option value="lac">Laminado de cejas (incluye perfilado)</option>
       <option value="lc">Limpieza facial profunda</option>
       <option value="peeling">Peeling</option>
       <option value="dl">Drenaje linfático manual</option>
@@ -400,6 +400,7 @@ p { line-height:1.6; margin-bottom:1rem; }
       <option value="combo8">Combo: Limpieza + Lifting + Laminado</option>
       <option value="combo9">Combo: Limpieza + Lifting + Drenaje + Perfilado</option>
       <option value="combo10">Combo: Limpieza + Lifting + Drenaje + Laminado</option>
+      <option value="combo11">Combo: Peeling + Lifting de pestañas</option>
     </select>
     <div id="precio-badge"></div>
     
@@ -686,7 +687,7 @@ p { line-height:1.6; margin-bottom:1rem; }
               <option value="">— Seleccioná —</option>
               <option value="lp">Lifting de pestañas</option>
               <option value="pc">Perfilado de cejas</option>
-              <option value="lac">Laminado de cejas</option>
+              <option value="lac">Laminado de cejas (incluye perfilado)</option>
               <option value="lc">Limpieza facial profunda</option>
               <option value="peeling">Peeling</option>
               <option value="dl">Drenaje linfático</option>
@@ -700,6 +701,7 @@ p { line-height:1.6; margin-bottom:1rem; }
               <option value="combo8">Combo: Limpieza + Lifting + Laminado</option>
               <option value="combo9">Combo: Limpieza + Lifting + Drenaje + Perfilado</option>
               <option value="combo10">Combo: Limpieza + Lifting + Drenaje + Laminado</option>
+      <option value="combo11">Combo: Peeling + Lifting de pestañas</option>
             </select>
           </div>
         </div>
@@ -866,6 +868,7 @@ const TRATS = {
   combo8:  { n:'Combo: Limpieza + Lifting + Laminado',       dur:120, precio:72000,  camilla:'exclusiva' },
   combo9:  { n:'Combo: Limpieza + Lifting + Drenaje + Perfilado', dur:150, precio:95000, camilla:'exclusiva' },
   combo10: { n:'Combo: Limpieza + Lifting + Drenaje + Laminado',  dur:150, precio:100000, camilla:'exclusiva' },
+  combo11: { n:'Combo: Peeling + Lifting de pestañas',            dur:105, precio:65000, camilla:'exclusiva' },
 };
 
 // HORARIOS POR DÍA DE SEMANA (0=domingo, 1=lunes, etc.)
@@ -1014,6 +1017,7 @@ const mStr = m => { const h=Math.floor(m/60),mn=m%60; return h+':'+(mn<10?'0':''
 const fISO = d => d.toISOString().slice(0,10);
 const hoyD = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
 const esDrenaje = k => ['dl','combo5','combo6','combo9','combo10'].includes(k);
+const montoEfectivo = t => t.noAsistio ? (t.señaPagada ? (Number(t.seña) || 10000) : 0) : (Number(t.precio) || 0);
 
 function getPrecio() {
   const precios = getPrecios();
@@ -1071,7 +1075,10 @@ function generarMensajeRecordatorio(tratN, tratK, fecha, hora, zonas=[]) {
     'combo9': 'Venir sin maquillaje ni máscara de pestañas, y con ropa cómoda ya que la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '') + '\nDuración aprox: 2 horas y media.',
 
     // Limpieza + Lifting + Drenaje + Laminado — 2 hs y media
-    'combo10': 'Venir sin maquillaje, máscara de pestañas ni maquillaje de cejas, y con ropa cómoda ya que la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte pestañas ni cejas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '') + '\nDuración aprox: 2 horas y media.'
+    'combo10': 'Venir sin maquillaje, máscara de pestañas ni maquillaje de cejas, y con ropa cómoda ya que la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte pestañas ni cejas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '') + '\nDuración aprox: 2 horas y media.',
+
+    // Peeling + Lifting de pestañas — 1 hora 45 min
+    'combo11': 'Venir sin maquillaje ni máscara de pestañas.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.\nDuración aprox: 1 hora y 45 min.'
   };
 
   const customMsgs = getCfgMensajes();
@@ -1904,7 +1911,7 @@ function renderEstadisticas() {
     if (encontrados.length === 0) {
       resBuscar.innerHTML = '<p style="color:var(--adm-hint);font-size:0.85rem;">Sin resultados.</p>';
     } else {
-      const totalCliente = encontrados.reduce((s, t) => s + (Number(t.precio) || 0), 0);
+      const totalCliente = encontrados.reduce((s, t) => s + montoEfectivo(t), 0);
       const pagados = encontrados.filter(t => t.señaPagada).length;
       resBuscar.innerHTML =
         `<p style="color:var(--adm-dorado);font-size:0.82rem;margin-bottom:0.5rem;">
@@ -1914,8 +1921,8 @@ function renderEstadisticas() {
           `<div style="background:var(--adm-card);padding:0.6rem 0.8rem;border-radius:6px;margin-bottom:0.4rem;border-left:3px solid var(--adm-dorado);font-size:0.83rem;">
             <strong style="color:var(--adm-text);">${t.nom} ${t.ape}</strong>
             <span style="color:var(--adm-hint);margin-left:0.5rem;">${t.fecha} · ${mStr(t.hora)} hs</span><br>
-            <span style="color:var(--adm-hint);">${t.tratN}</span>
-            <span style="float:right;color:${t.señaPagada ? '#4CAF50' : '#FFC107'};font-weight:600;">${fPeso(t.precio)}</span>
+            <span style="color:var(--adm-hint);">${t.tratN}${t.noAsistio ? ' <span style="color:#E74C3C;">(no asistió)</span>' : ''}</span>
+            <span style="float:right;color:${t.señaPagada ? '#4CAF50' : '#FFC107'};font-weight:600;">${fPeso(montoEfectivo(t))}</span>
           </div>`
         ).join('');
     }
@@ -1932,7 +1939,7 @@ function renderEstadisticas() {
     if (!t.fecha || t.fecha > hoyISO) return; // solo días ya pasados
     const key = t.fecha.substring(0, 7);
     if (!porMes[key]) porMes[key] = { total: 0, count: 0, señas: 0, turnos: [], ventas: [], totalVentas: 0 };
-    porMes[key].total += Number(t.precio) || 0;
+    porMes[key].total += montoEfectivo(t);
     porMes[key].count++;
     if (t.señaPagada) porMes[key].señas++;
     porMes[key].turnos.push(t);
@@ -1960,8 +1967,8 @@ function renderEstadisticas() {
         const detalleTurnos = data.turnos.sort((a,b) => b.fecha.localeCompare(a.fecha)).map(t => {
           const fObj = new Date(t.fecha + 'T12:00');
           return `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--adm-border);font-size:0.78rem;">
-            <span style="color:var(--adm-hint);">${DIAS_D[fObj.getDay()]} ${fObj.getDate()} — ${t.nom} ${t.ape} · ${t.tratN}</span>
-            <span style="color:${t.señaPagada ? '#4CAF50' : 'var(--adm-hint)'};white-space:nowrap;margin-left:0.5rem;">${fPeso(t.precio)}</span>
+            <span style="color:var(--adm-hint);">${DIAS_D[fObj.getDay()]} ${fObj.getDate()} — ${t.nom} ${t.ape} · ${t.tratN}${t.noAsistio ? ' <span style="color:#E74C3C;">(no asistió)</span>' : ''}</span>
+            <span style="color:${t.señaPagada ? '#4CAF50' : 'var(--adm-hint)'};white-space:nowrap;margin-left:0.5rem;">${fPeso(montoEfectivo(t))}</span>
           </div>`;
         }).join('');
         const detalleVentas = (data.ventas||[]).sort((a,b) => b.fecha.localeCompare(a.fecha)).map(v => {
@@ -1998,7 +2005,7 @@ function renderEstadisticas() {
     const k = t.tratN || t.trat || 'Desconocido';
     if (!porTrat[k]) porTrat[k] = { count: 0, total: 0 };
     porTrat[k].count++;
-    porTrat[k].total += Number(t.precio) || 0;
+    porTrat[k].total += montoEfectivo(t);
   });
   const tratsOrden = Object.entries(porTrat).sort((a, b) => b[1].count - a[1].count);
   const maxTrat = tratsOrden[0]?.[1].count || 1;
@@ -2597,7 +2604,8 @@ function renderListaTurnos() {
     if (wpNum.startsWith('54') && wpNum.length === 12 && wpNum[2] !== '9') wpNum = '549' + wpNum.slice(2);
     const wpMsgTxt = generarMensajeRecordatorio(t.tratN, t.trat, fStr, mStr(t.hora), t.zonas || []);
     const wpMsg = encodeURIComponent(wpMsgTxt);
-    return `<div class="turno-item">
+    return `<div class="turno-item"${t.noAsistio ? ' style="opacity:0.7;"' : ''}>
+      ${t.noAsistio ? '<div style="background:#E74C3C;color:#FFF;font-size:0.75rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:4px;display:inline-block;margin-bottom:0.4rem;">🚫 NO ASISTIÓ — seña retenida</div><br>' : ''}
       <strong>🌺 ${t.tratN}</strong><br>
       👤 ${t.nom} ${t.ape}<br>
       📅 ${fStr} a las <strong>${mStr(t.hora)} hs</strong><br>
@@ -2612,6 +2620,7 @@ function renderListaTurnos() {
         </div>
       </div>
       <div class="turno-actions">
+        <button class="btn-del" style="background:${t.noAsistio ? 'var(--adm-hint)' : '#E74C3C'};" onclick="toggleNoAsistio('${t.id}')">${t.noAsistio ? '↩️ Deshacer no asistió' : '🚫 No asistió'}</button>
         <button class="btn-del" onclick="eliminarTurno('${t.id}')">🗑️ Eliminar</button>
       </div>
     </div>`;
@@ -2668,6 +2677,18 @@ function toggleSeñaPagada(id) {
       const fechaFormato = DIAS3[fObj.getDay()] + ' ' + fObj.getDate() + ' de ' + MESES3[fObj.getMonth()];
       enviarEmailSeñaConfirmada(turno.nom, turno.tratN, fechaFormato, mStr(turno.hora), turno.email);
     }
+    if (tabActual === 'agenda') renderAgenda();
+    else renderListaTurnos();
+  }
+}
+
+function toggleNoAsistio(id) {
+  const turnos = getTurnos();
+  const turno = turnos.find(t => t.id === id);
+  if (turno) {
+    turno.noAsistio = !turno.noAsistio;
+    setTurnos(turnos);
+    sbUpdate('turnos', id, { "noAsistio": turno.noAsistio }).catch(()=>{});
     if (tabActual === 'agenda') renderAgenda();
     else renderListaTurnos();
   }
@@ -2982,7 +3003,8 @@ const MSGS_LABELS = {
   combo7:  'Combo: Limpieza + Lifting + Perfilado',
   combo8:  'Combo: Limpieza + Lifting + Laminado',
   combo9:  'Combo: Limpieza + Lifting + Drenaje + Perfilado',
-  combo10: 'Combo: Limpieza + Lifting + Drenaje + Laminado'
+  combo10: 'Combo: Limpieza + Lifting + Drenaje + Laminado',
+  combo11: 'Combo: Peeling + Lifting de pestañas'
 };
 
 const getCfgMensajes = () => { try { return JSON.parse(localStorage.getItem('amp_msgs') || '{}'); } catch { return {}; } };
