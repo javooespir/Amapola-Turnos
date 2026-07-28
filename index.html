@@ -710,8 +710,25 @@ p { line-height:1.6; margin-bottom:1rem; }
         <textarea class="dk-in-dark" id="mn-notas" placeholder="Notas (opcional)" rows="2"></textarea>
         <button class="btn-rojo-sm" onclick="guardarManual()">Guardar turno</button>
       </div>
+
+      <div class="card-box-dark">
+        <h3>🛍️ Venta de producto</h3>
+        <p style="font-size:0.88rem;color:var(--adm-hint);margin-bottom:1.2rem;">Registrá ventas de cosmética para sumarlas a las estadísticas</p>
+        <input type="text" class="dk-in-dark" id="vp-producto" placeholder="Nombre del producto">
+        <input type="text" class="dk-in-dark" id="vp-clienta" placeholder="Nombre de la clienta">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+          <input type="number" class="dk-in-dark" id="vp-precio" placeholder="Precio de venta" style="margin:0;">
+          <input type="date" class="dk-in-dark" id="vp-fecha" style="margin:0;">
+        </div>
+        <textarea class="dk-in-dark" id="vp-obs" placeholder="Observaciones (opcional)" rows="2"></textarea>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button class="btn-rojo-sm" onclick="guardarVentaProducto()">Guardar venta</button>
+          <button class="btn-rojo-sm" style="background:var(--adm-surface);border:1px solid var(--adm-border);" onclick="verVentasProductos()">Ver ventas registradas</button>
+        </div>
+        <div id="lista-ventas-productos" style="margin-top:1rem;"></div>
+      </div>
     </div>
-    
+
     <!-- TAB ESTADÍSTICAS -->
     <div id="tab-estadisticas" class="adm-section">
 
@@ -1854,6 +1871,8 @@ function cambiarTab(tab) {
 }
 
 // ESTADÍSTICAS
+let _ventasCache = [];
+
 async function cargarYRenderEstadisticas() {
   document.getElementById('stats-financiero').innerHTML = '<p style="color:var(--adm-hint);font-size:0.85rem;">Cargando...</p>';
   // Traer TODOS los turnos históricos (sin filtro de fecha)
@@ -1864,6 +1883,10 @@ async function cargarYRenderEstadisticas() {
       localStorage.setItem('amp_t', JSON.stringify(data));
     }
   } catch(e) { console.error('Error cargando histórico:', e); }
+  try {
+    const ventas = await sbGet('ventas_productos', 'order=fecha.asc');
+    if (ventas) _ventasCache = ventas;
+  } catch(e) { console.error('Error cargando ventas:', e); }
   renderEstadisticas();
 }
 
@@ -1908,11 +1931,19 @@ function renderEstadisticas() {
   todos.forEach(t => {
     if (!t.fecha || t.fecha > hoyISO) return; // solo días ya pasados
     const key = t.fecha.substring(0, 7);
-    if (!porMes[key]) porMes[key] = { total: 0, count: 0, señas: 0, turnos: [] };
+    if (!porMes[key]) porMes[key] = { total: 0, count: 0, señas: 0, turnos: [], ventas: [], totalVentas: 0 };
     porMes[key].total += Number(t.precio) || 0;
     porMes[key].count++;
     if (t.señaPagada) porMes[key].señas++;
     porMes[key].turnos.push(t);
+  });
+  (_ventasCache || []).forEach(v => {
+    if (!v.fecha || v.fecha > hoyISO) return; // solo ventas ya pasadas
+    const key = v.fecha.substring(0, 7);
+    if (!porMes[key]) porMes[key] = { total: 0, count: 0, señas: 0, turnos: [], ventas: [], totalVentas: 0 };
+    porMes[key].total += Number(v.precio) || 0;
+    porMes[key].totalVentas += Number(v.precio) || 0;
+    porMes[key].ventas.push(v);
   });
 
   const mesesOrden = Object.keys(porMes).sort().reverse();
@@ -1925,14 +1956,22 @@ function renderEstadisticas() {
         const data = porMes[key];
         const pct = Math.round((data.total / maxTotal) * 100);
         const expanded = window._statsExpandidos.has(key);
-        const detalle = data.turnos.sort((a,b) => b.fecha.localeCompare(a.fecha)).map(t => {
-          const DIAS_D = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        const DIAS_D = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        const detalleTurnos = data.turnos.sort((a,b) => b.fecha.localeCompare(a.fecha)).map(t => {
           const fObj = new Date(t.fecha + 'T12:00');
           return `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--adm-border);font-size:0.78rem;">
             <span style="color:var(--adm-hint);">${DIAS_D[fObj.getDay()]} ${fObj.getDate()} — ${t.nom} ${t.ape} · ${t.tratN}</span>
             <span style="color:${t.señaPagada ? '#4CAF50' : 'var(--adm-hint)'};white-space:nowrap;margin-left:0.5rem;">${fPeso(t.precio)}</span>
           </div>`;
         }).join('');
+        const detalleVentas = (data.ventas||[]).sort((a,b) => b.fecha.localeCompare(a.fecha)).map(v => {
+          const fObj = new Date(v.fecha + 'T12:00');
+          return `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--adm-border);font-size:0.78rem;">
+            <span style="color:var(--adm-hint);">🛍️ ${DIAS_D[fObj.getDay()]} ${fObj.getDate()} — ${v.producto} · ${v.clienta}</span>
+            <span style="color:#4CAF50;white-space:nowrap;margin-left:0.5rem;">${fPeso(v.precio)}</span>
+          </div>`;
+        }).join('');
+        const detalle = detalleTurnos + detalleVentas;
         return `
           <div style="margin-bottom:0.8rem;">
             <div onclick="window._statsExpandidos.has('${key}')?window._statsExpandidos.delete('${key}'):window._statsExpandidos.add('${key}');renderEstadisticas();"
@@ -1943,10 +1982,11 @@ function renderEstadisticas() {
             <div style="background:var(--adm-border);border-radius:4px;height:8px;overflow:hidden;">
               <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--adm-dorado),var(--adm-rojo));border-radius:4px;transition:width 0.4s;"></div>
             </div>
-            <div style="display:flex;gap:1rem;margin-top:0.3rem;font-size:0.75rem;color:var(--adm-hint);">
+            <div style="display:flex;gap:1rem;margin-top:0.3rem;font-size:0.75rem;color:var(--adm-hint);flex-wrap:wrap;">
               <span>${data.count} turno${data.count !== 1 ? 's' : ''}</span>
               <span>${data.señas} seña${data.señas !== 1 ? 's' : ''} confirmada${data.señas !== 1 ? 's' : ''}</span>
-              <span>Prom: ${fPeso(Math.round(data.total / data.count))}</span>
+              ${data.count > 0 ? `<span>Prom: ${fPeso(Math.round(data.total / data.count))}</span>` : ''}
+              ${(data.ventas||[]).length > 0 ? `<span>🛍️ ${data.ventas.length} venta${data.ventas.length !== 1 ? 's' : ''} · ${fPeso(data.totalVentas)}</span>` : ''}
             </div>
             ${expanded ? `<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:var(--adm-card);border-radius:6px;">${detalle}</div>` : ''}
           </div>`;
@@ -2781,6 +2821,52 @@ function guardarManual() {
   
   alert('Turno cargado');
   renderListaTurnos();
+}
+
+// VENTA DE PRODUCTO
+async function guardarVentaProducto() {
+  const producto = document.getElementById('vp-producto').value.trim();
+  const clienta = document.getElementById('vp-clienta').value.trim();
+  const precio = parseInt(document.getElementById('vp-precio').value);
+  const fecha = document.getElementById('vp-fecha').value;
+  const observaciones = document.getElementById('vp-obs').value.trim();
+
+  if (!producto || !clienta || !precio || !fecha) {
+    alert('Completá producto, clienta, precio y fecha');
+    return;
+  }
+
+  const venta = { producto, clienta, precio, fecha, observaciones };
+  const ok = await sbInsert('ventas_productos', venta);
+  alert(ok ? 'Venta guardada ✓' : 'Error al guardar. Revisá la conexión.');
+  if (!ok) return;
+
+  document.getElementById('vp-producto').value = '';
+  document.getElementById('vp-clienta').value = '';
+  document.getElementById('vp-precio').value = '';
+  document.getElementById('vp-fecha').value = '';
+  document.getElementById('vp-obs').value = '';
+
+  const lista = document.getElementById('lista-ventas-productos');
+  if (lista.innerHTML) verVentasProductos();
+}
+
+async function verVentasProductos() {
+  const cont = document.getElementById('lista-ventas-productos');
+  cont.innerHTML = '<p style="color:var(--adm-hint);font-size:0.85rem;">Cargando...</p>';
+  const data = await sbGet('ventas_productos', 'order=fecha.desc');
+  if (!data || data.length === 0) {
+    cont.innerHTML = '<p style="color:var(--adm-hint);font-size:0.85rem;">Sin ventas registradas.</p>';
+    return;
+  }
+  cont.innerHTML = data.map(v => `
+    <div style="background:var(--adm-card);padding:0.6rem 0.8rem;border-radius:6px;margin-bottom:0.4rem;border-left:3px solid var(--adm-dorado);font-size:0.83rem;">
+      <strong style="color:var(--adm-text);">${v.producto}</strong>
+      <span style="float:right;color:#4CAF50;font-weight:600;">${fPeso(v.precio)}</span><br>
+      <span style="color:var(--adm-hint);">${v.clienta} · ${v.fecha}</span>
+      ${v.observaciones ? `<br><span style="color:var(--adm-hint);font-size:0.78rem;">${v.observaciones}</span>` : ''}
+    </div>
+  `).join('');
 }
 
 // CARGAR MANUAL — actualizar horas cuando cambia fecha O tratamiento
