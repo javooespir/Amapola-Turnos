@@ -376,9 +376,8 @@ p { line-height:1.6; margin-bottom:1rem; }
     </div>
     <div style="color:#E74C3C;font-size:0.8rem;display:none;margin-top:-0.5rem;" id="err-tel">El teléfono debe tener entre 8 y 10 dígitos</div>
 
-    <div style="position:relative;margin-top:0.2rem;">
-      <input type="email" class="dk-in" id="inp-email" placeholder="Email (opcional)" style="padding-right:2.5rem;">
-      <span style="position:absolute;right:0.8rem;top:50%;transform:translateY(-50%);font-size:0.75rem;color:var(--rojo-hover);font-weight:600;pointer-events:none;">OPT</span>
+    <div style="margin-top:0.2rem;">
+      <input type="email" class="dk-in" id="inp-email" placeholder="Email (opcional)">
     </div>
     <p style="font-size:0.78rem;color:var(--texto-hint);margin-top:-0.4rem;margin-bottom:0.8rem;text-align:center;">✉️ Si ingresás tu email te mandamos la confirmación del turno</p>
 
@@ -490,8 +489,7 @@ p { line-height:1.6; margin-bottom:1rem; }
     <div id="resumen-box" style="line-height:1.8;margin-bottom:1.5rem;"></div>
     
     <div style="background:#FFF3CD;padding:1.2rem 1rem;border-radius:8px;border:2px solid #FFC107;margin-bottom:1rem;text-align:center;">
-      <p style="font-size:1.05rem;font-weight:700;color:#333;margin:0 0 0.3rem;">IMPORTANTE: Para terminar de realizar la reserva, transferí la seña de <span id="monto-num" style="color:var(--rojo);"></span> al siguiente alias:</p>
-      <p style="font-size:1.35rem;font-weight:900;color:var(--rojo);letter-spacing:0.06em;margin:0.4rem 0;">CATASAGAR</p>
+      <p style="font-size:1.05rem;font-weight:700;color:#333;margin:0 0 0.3rem;">IMPORTANTE: Para terminar de realizar la reserva, transferí la seña de <span id="monto-num" style="color:var(--rojo);"></span> al alias que figura abajo.</p>
       <p style="font-size:0.95rem;font-weight:800;color:#c0392b;margin:0;">DE NO ABONAR LA SEÑA, EL TURNO NO QUEDA RESERVADO</p>
     </div>
     <div style="background:#FFF;border:2.5px solid var(--rojo);border-radius:14px;padding:1.2rem 1rem;margin-bottom:1.5rem;text-align:center;">
@@ -1385,6 +1383,11 @@ function seleccionarTrat(k) {
   document.getElementById('sel-trat').value = k;
   cambioTrat();
   document.querySelectorAll('#trat-cards .svc-card').forEach(c => c.classList.toggle('active', c.dataset.trat === k));
+  if (k) {
+    setTimeout(() => {
+      document.getElementById('box-cal').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
 }
 
 function cambioTrat() {
@@ -1484,6 +1487,9 @@ function selFecha(f) {
   renderHorarios();
   document.getElementById('box-hs').style.display = 'block';
   document.getElementById('btn-conf').style.display = 'none';
+  setTimeout(() => {
+    document.getElementById('box-hs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
 // Overrides especiales para esta semana (8-12 junio)
