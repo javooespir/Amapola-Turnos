@@ -169,6 +169,20 @@ p { line-height:1.6; margin-bottom:1rem; }
 .contact-link:hover { color:var(--rojo); }
 .contact-link svg { width:17px; height:17px; flex-shrink:0; }
 
+.trat-group { margin-bottom:1.3rem; }
+.trat-group:last-child { margin-bottom:0.3rem; }
+.trat-group-label { font-family:'Outfit',sans-serif; font-weight:500; font-size:0.68rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--texto-hint); margin-bottom:0.6rem; }
+.svc-card { position:relative; background:#FFF; border:1.5px solid var(--gris-claro); border-radius:14px; padding:0.9rem 1rem; margin-bottom:0.6rem; cursor:pointer; transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.svc-card:last-child { margin-bottom:0; }
+.svc-card:hover { border-color:var(--rosa); box-shadow:0 6px 16px rgba(26,18,21,0.08); transform:translateY(-1px); }
+.svc-card.active { border-color:var(--rojo); box-shadow:0 6px 16px rgba(168,35,58,0.14); }
+.svc-badge { position:absolute; top:-9px; right:14px; background:var(--rojo); color:#FFF; font-family:'Outfit',sans-serif; font-weight:500; font-size:0.56rem; letter-spacing:0.12em; text-transform:uppercase; padding:0.26rem 0.6rem; border-radius:999px; }
+.svc-top { display:flex; align-items:baseline; justify-content:space-between; gap:0.6rem; }
+.svc-top strong { font-family:'Outfit',sans-serif; font-weight:600; font-size:0.92rem; color:var(--texto); }
+.svc-dur { font-family:'Inter',sans-serif; font-weight:300; font-size:0.74rem; color:var(--texto-hint); white-space:nowrap; }
+.svc-bottom { margin-top:0.45rem; display:flex; justify-content:flex-end; }
+.svc-price { font-variant-numeric:tabular-nums; font-family:'Outfit',sans-serif; font-weight:600; font-size:1rem; color:var(--rojo); }
+
 .consulta-result { background:#FFF; padding:1.5rem; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.08); margin-top:1.5rem; }
 .consulta-result h3 { color:var(--rojo); margin-bottom:1rem; }
 .consulta-turno { background:var(--crema); padding:1rem; border-radius:8px; margin-bottom:0.8rem; border-left:4px solid var(--dorado); }
@@ -231,7 +245,7 @@ p { line-height:1.6; margin-bottom:1rem; }
     <p class="home-sub">Estética facial y corporal en Ituzaingó. Cada tratamiento, pensado para vos.</p>
 
     <div class="pill-row">
-      <div class="pill pill-solid" onclick="showPage('p1')">Reservar turno</div>
+      <div class="pill pill-solid" onclick="renderTratCards();showPage('p1')">Reservar turno</div>
       <div class="pill pill-outline" onclick="showPage('p-consulta')">Ya tengo turno</div>
     </div>
 
@@ -390,8 +404,7 @@ p { line-height:1.6; margin-bottom:1rem; }
   <h3>Paso 2 de 3: Elegí tratamiento y fecha</h3>
   
   <div class="card-box">
-    <label style="font-weight:600;margin-bottom:0.5rem;display:block;">Tratamiento</label>
-    <select class="dk-in" id="sel-trat" onchange="cambioTrat()" style="margin-bottom:0.5rem;">
+    <select class="dk-in" id="sel-trat" onchange="cambioTrat()" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">
       <option value="">— Seleccioná —</option>
       <option value="lp">Lifting de pestañas</option>
       <option value="pc">Perfilado de cejas</option>
@@ -411,8 +424,9 @@ p { line-height:1.6; margin-bottom:1rem; }
       <option value="combo10">Combo: Limpieza + Lifting + Drenaje + Laminado</option>
       <option value="combo11">Combo: Peeling + Lifting de pestañas</option>
     </select>
+    <div id="trat-cards"></div>
     <div id="precio-badge"></div>
-    
+
     <div id="drenaje-aviso" style="display:none;margin-top:1rem;">
       <label style="font-weight:600;margin-bottom:0.5rem;display:block;">Zonas extras (drenaje)</label>
       <div style="margin-bottom:0.5rem;font-size:0.85rem;color:var(--texto-hint);">Incluye bases linfáticas + 1 zona. Zonas extras: +$12.000 c/u</div>
@@ -854,8 +868,8 @@ let agendaFechaActual = new Date();
   // Mostrar indicador de carga
   const overlay = document.createElement('div');
   overlay.id = 'sb-loading';
-  overlay.style.cssText = 'position:fixed;inset:0;background:#FAF8F5;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;';
-  overlay.innerHTML = '<div style="font-size:2rem">🌺</div><div style="font-family:Lato,sans-serif;color:#8B1A1A;font-size:1rem;">Cargando turnos...</div>';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#FBF5F2;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;';
+  overlay.innerHTML = '<div style="font-size:2rem">🌺</div><div style="font-family:Outfit,sans-serif;color:#6E1626;font-size:1rem;">Cargando turnos...</div>';
   document.body.appendChild(overlay);
 
   // Intentar Supabase
@@ -1267,7 +1281,7 @@ async function buscarTurnos() {
       <div class="consulta-result">
         <h3>No se encontraron turnos</h3>
         <p>No hay turnos registrados con esos datos.</p>
-        <button class="btn-rojo" onclick="showPage('p1')">Reservar un turno</button>
+        <button class="btn-rojo" onclick="renderTratCards();showPage('p1')">Reservar un turno</button>
       </div>
     `;
     return;
@@ -1295,14 +1309,14 @@ async function buscarTurnos() {
       '</span>' +
       (!pagada ? '<br><a href="https://wa.me/5491159029792?text=' + encodeURIComponent(wpMsgComprobante) + '" target="_blank" style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.6rem;padding:0.5rem 1rem;background:#25D366;color:#FFF;border-radius:20px;text-decoration:none;font-size:0.85rem;font-weight:600;">📎 Enviar comprobante por WA</a>' : '') +
       '<br><div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem;">' +
-        '<button onclick="abrirModificarTurno(\'' + t.id + '\',\'' + t.nom.replace(/'/g, "\\'") + '\',\'' + t.ape.replace(/'/g, "\\'") + '\',\'' + t.fecha + '\',\'' + t.trat + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\',\'' + t.hora + '\',\'' + (pagada ? 'si' : 'no') + '\',\'' + t.tel.replace(/'/g, "\\'") + '\')" style="flex:1;padding:0.5rem 1rem;background:#B8975A;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">📝 Modificar turno</button>' +
+        '<button onclick="abrirModificarTurno(\'' + t.id + '\',\'' + t.nom.replace(/'/g, "\\'") + '\',\'' + t.ape.replace(/'/g, "\\'") + '\',\'' + t.fecha + '\',\'' + t.trat + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\',\'' + t.hora + '\',\'' + (pagada ? 'si' : 'no') + '\',\'' + t.tel.replace(/'/g, "\\'") + '\')" style="flex:1;padding:0.5rem 1rem;background:#8E1D30;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">📝 Modificar turno</button>' +
         '<button onclick="cancelarTurnoCliente(\'' + t.id + '\',\'' + t.nom + '\',\'' + t.tratN.replace(/'/g, "\\'") + '\')" style="flex:1;padding:0.5rem 1rem;background:#E74C3C;color:#FFF;border:none;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;">❌ Cancelar</button>' +
       '</div>' +
     '</div>';
   });
   
   html += `
-    <button class="btn-rojo" onclick="showPage('p1')">Reservar otro turno</button>
+    <button class="btn-rojo" onclick="renderTratCards();showPage('p1')">Reservar otro turno</button>
     </div>
   `;
   
@@ -1332,6 +1346,45 @@ function irPag2() {
   est.cliente = { nom, ape, tel: pais + tel, email: email || null };
   document.getElementById('saludo-hdr').textContent = 'Hola, ' + nom + ' 👋';
   showPage('p2');
+}
+
+const TRAT_GRUPOS = [
+  { label: 'Tratamientos', keys: ['lp','pc','lac','lc','peeling','dl'] },
+  { label: 'Combos', keys: ['combo1','combo2','combo3','combo4','combo5','combo6','combo7','combo8','combo9','combo10','combo11'] }
+];
+
+function durTexto(min) {
+  if (min < 60) return min + ' min';
+  const h = Math.floor(min / 60), m = min % 60;
+  if (m === 0) return h + (h === 1 ? ' hora' : ' horas');
+  return h + 'h ' + m + ' min';
+}
+
+function renderTratCards() {
+  const precios = getPrecios();
+  const actual = document.getElementById('sel-trat').value;
+  let html = '';
+  TRAT_GRUPOS.forEach(g => {
+    html += '<div class="trat-group"><div class="trat-group-label">' + g.label + '</div>';
+    g.keys.forEach(k => {
+      const t = TRATS[k];
+      if (!t) return;
+      const precio = precios[k] !== undefined ? precios[k] : t.precio;
+      html += '<div class="svc-card' + (k === actual ? ' active' : '') + '" data-trat="' + k + '" onclick="seleccionarTrat(\'' + k + '\')">' +
+        (k === 'lp' ? '<span class="svc-badge">Más pedido</span>' : '') +
+        '<div class="svc-top"><strong>' + t.n + '</strong><span class="svc-dur">' + durTexto(t.dur) + '</span></div>' +
+        '<div class="svc-bottom"><span class="svc-price">' + fPeso(precio) + '</span></div>' +
+      '</div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('trat-cards').innerHTML = html;
+}
+
+function seleccionarTrat(k) {
+  document.getElementById('sel-trat').value = k;
+  cambioTrat();
+  document.querySelectorAll('#trat-cards .svc-card').forEach(c => c.classList.toggle('active', c.dataset.trat === k));
 }
 
 function cambioTrat() {
