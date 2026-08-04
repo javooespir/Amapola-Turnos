@@ -6,63 +6,66 @@
 <title>Amapola Studio — Turnos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Inter:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
-  --rojo: #8B1A1A;
-  --crema: #FAF8F5;
-  --dorado: #B8975A;
-  --texto: #2C2C2C;
-  --texto-hint: #888;
-  --gris-claro: #E8E8E8;
+  --rojo: #A8233A;
+  --rojo-hover: #8E1D30;
+  --rojo-deep: #6E1626;
+  --rosa: #D4918E;
+  --crema: #FBF5F2;
+  --dorado: #D4918E;
+  --texto: #1A1215;
+  --texto-hint: rgba(26,18,21,.5);
+  --gris-claro: #F5E4DF;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body { width:100%; height:100%; font-family:'Lato',sans-serif; background:var(--crema); color:var(--texto); overflow-x:hidden; }
+html, body { width:100%; height:100%; font-family:'Inter',sans-serif; background:var(--crema); color:var(--texto); overflow-x:hidden; }
 .page { display:none; flex-direction:column; min-height:100vh; padding:1.5rem; background:var(--crema); }
 .page.active { display:flex; }
-h1 { font-family:'Playfair Display',serif; font-size:1.8rem; color:var(--rojo); margin-bottom:0.5rem; text-align:center; }
-h2 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--rojo); margin-bottom:0.7rem; }
-h3 { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.1rem; color:var(--dorado); margin-bottom:0.5rem; }
+h1 { font-family:'Outfit',sans-serif; font-weight:600; font-size:1.7rem; color:var(--rojo-deep); margin-bottom:0.5rem; text-align:center; letter-spacing:0.01em; }
+h2 { font-family:'Outfit',sans-serif; font-weight:600; font-size:1.3rem; color:var(--rojo-deep); margin-bottom:0.7rem; }
+h3 { font-family:'Outfit',sans-serif; font-weight:500; font-style:normal; font-size:1.02rem; color:var(--rojo-hover); margin-bottom:0.5rem; }
 p { line-height:1.6; margin-bottom:1rem; }
-.dk-in { width:100%; padding:0.8rem; border:1px solid #CCC; border-radius:8px; font-size:1rem; font-family:'Lato',sans-serif; margin-bottom:0.8rem; }
-.dk-in:focus { outline:none; border-color:var(--dorado); }
-.btn-rojo { width:100%; padding:1rem; background:var(--rojo); color:#FFF; border:none; border-radius:30px; font-size:1.1rem; font-weight:600; cursor:pointer; font-family:'Lato',sans-serif; margin-top:1rem; transition:background 0.2s; }
-.btn-rojo:hover { background:#6D1414; }
-.btn-rojo-sm { padding:0.7rem 1.5rem; background:var(--rojo); color:#FFF; border:none; border-radius:20px; font-size:0.95rem; cursor:pointer; font-family:'Lato',sans-serif; transition:background 0.2s; }
-.btn-rojo-sm:hover { background:#6D1414; }
-.btn-crema { width:100%; padding:1rem; background:var(--crema); color:var(--rojo); border:2px solid var(--rojo); border-radius:30px; font-size:1.1rem; font-weight:600; cursor:pointer; font-family:'Lato',sans-serif; margin-top:1rem; transition:all 0.2s; }
+.dk-in { width:100%; padding:0.8rem; border:1px solid #CCC; border-radius:8px; font-size:1rem; font-family:'Inter',sans-serif; margin-bottom:0.8rem; }
+.dk-in:focus { outline:none; border-color:var(--rojo); }
+.btn-rojo { width:100%; padding:1rem; background:var(--rojo); color:#FFF; border:none; border-radius:30px; font-size:1.05rem; font-weight:500; cursor:pointer; font-family:'Outfit',sans-serif; letter-spacing:0.02em; margin-top:1rem; transition:background 0.2s; }
+.btn-rojo:hover { background:var(--rojo-hover); }
+.btn-rojo-sm { padding:0.7rem 1.5rem; background:var(--rojo); color:#FFF; border:none; border-radius:20px; font-size:0.9rem; font-weight:500; cursor:pointer; font-family:'Outfit',sans-serif; transition:background 0.2s; }
+.btn-rojo-sm:hover { background:var(--rojo-hover); }
+.btn-crema { width:100%; padding:1rem; background:var(--crema); color:var(--rojo); border:2px solid var(--rojo); border-radius:30px; font-size:1.05rem; font-weight:500; cursor:pointer; font-family:'Outfit',sans-serif; letter-spacing:0.02em; margin-top:1rem; transition:all 0.2s; }
 .btn-crema:hover { background:var(--rojo); color:#FFF; }
 
 .logo-svg { width:70px; height:70px; margin:0 auto 1.5rem; display:block; }
-.slogan { font-family:'Cormorant Garamond',serif; font-style:italic; text-align:center; color:var(--dorado); font-size:1.15rem; margin-bottom:2rem; }
+.slogan { font-family:'Outfit',sans-serif; font-weight:500; text-align:center; color:var(--rojo-hover); font-size:1.1rem; margin-bottom:2rem; }
 .divider-line { position:relative; text-align:center; margin:2rem 0 1.5rem; }
 .divider-line::before { content:''; position:absolute; left:0; top:50%; width:100%; height:1px; background:var(--gris-claro); }
 .divider-line span { position:relative; background:var(--crema); padding:0 1rem; font-size:0.85rem; color:var(--texto-hint); }
 
-.card-box { background:#FFF; padding:1.5rem; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.08); margin-bottom:1rem; }
-.precio-badge { display:inline-block; background:var(--dorado); color:#FFF; padding:0.4rem 1.2rem; border-radius:20px; font-weight:600; font-size:0.95rem; margin-top:0.5rem; }
-.precio-chip { background:var(--dorado); color:#FFF; padding:0.3rem 1rem; border-radius:15px; font-weight:600; font-size:0.9rem; }
+.card-box { background:#FFF; padding:1.5rem; border-radius:16px; box-shadow:0 2px 12px rgba(26,18,21,0.08); margin-bottom:1rem; }
+.precio-badge { display:inline-block; background:var(--rojo); color:#FFF; padding:0.4rem 1.2rem; border-radius:20px; font-weight:600; font-size:0.95rem; margin-top:0.5rem; }
+.precio-chip { background:var(--rojo); color:#FFF; padding:0.3rem 1rem; border-radius:15px; font-weight:600; font-size:0.9rem; }
 
 .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:0.5rem; }
 .cal-hdr { font-size:0.75rem; text-align:center; color:var(--texto-hint); font-weight:600; padding:0.4rem 0; }
 .cal-cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:0.88rem; cursor:pointer; background:#FFF; border:1px solid var(--gris-claro); transition:all 0.15s; }
 .cal-cell.disabled { background:var(--gris-claro); color:#BBB; cursor:default; border-color:transparent; }
 .cal-cell.selected { background:var(--rojo); color:#FFF; font-weight:700; border-color:var(--rojo); }
-.cal-cell:not(.disabled):hover { background:var(--dorado); color:#FFF; border-color:var(--dorado); }
+.cal-cell:not(.disabled):hover { background:var(--rojo-hover); color:#FFF; border-color:var(--rojo-hover); }
 
 .hs-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
 .hs-chip { padding:0.7rem; text-align:center; border-radius:10px; background:#FFF; border:1px solid var(--gris-claro); cursor:pointer; font-size:0.9rem; }
 .hs-chip.disabled { background:var(--gris-claro); color:#AAA; cursor:default; }
 .hs-chip.selected { background:var(--rojo); color:#FFF; font-weight:600; }
-.hs-chip:not(.disabled):hover { background:var(--dorado); color:#FFF; }
+.hs-chip:not(.disabled):hover { background:var(--rojo-hover); color:#FFF; }
 
 .zona-chip { display:inline-block; padding:0.5rem 1rem; margin:0.3rem; border-radius:20px; background:#FFF; border:2px solid var(--gris-claro); cursor:pointer; font-size:0.85rem; transition:all 0.2s; }
 .zona-chip.sel { background:var(--rojo); color:#FFF; border-color:var(--rojo); }
 
-.fin-card { background:#FFF; padding:2rem 1.5rem; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.1); text-align:center; max-width:400px; width:100%; }
-.fin-card h2 { color:var(--rojo); margin:1rem 0 0.5rem; }
+.fin-card { background:#FFF; padding:2rem 1.5rem; border-radius:16px; box-shadow:0 4px 20px rgba(26,18,21,0.1); text-align:center; max-width:400px; width:100%; }
+.fin-card h2 { color:var(--rojo-deep); margin:1rem 0 0.5rem; }
 .fin-card p { color:var(--texto); margin-bottom:1rem; }
-.ig-link { display:inline-block; margin-top:1rem; color:var(--dorado); text-decoration:none; font-weight:600; }
+.ig-link { display:inline-block; margin-top:1rem; color:var(--rojo-hover); text-decoration:none; font-weight:600; }
 
 /* ── ADMIN DARK THEME ── */
 :root {
@@ -147,10 +150,24 @@ p { line-height:1.6; margin-bottom:1rem; }
 
 .service-card { background:#FFF; padding:1.4rem; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.07); margin-bottom:1.2rem; border-left:4px solid var(--rojo); }
 
-.home-buttons { display:flex; flex-direction:column; gap:1rem; max-width:400px; margin:2rem auto; }
-.home-btn { display:flex; align-items:center; justify-content:center; gap:0.7rem; padding:1.2rem; background:#FFF; border:2px solid var(--rojo); border-radius:16px; font-size:1.05rem; font-weight:600; color:var(--rojo); cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
-.home-btn:hover { background:var(--rojo); color:#FFF; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.12); }
-.home-btn .emoji { font-size:1.5rem; }
+.home-hero { position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2rem 0; overflow:hidden; }
+.home-watermark { position:absolute; top:4%; left:50%; transform:translateX(-50%); width:300px; height:300px; opacity:0.07; pointer-events:none; z-index:0; }
+.home-watermark .petal { fill:var(--rojo); }
+.home-eyebrow { position:relative; z-index:1; display:block; font-family:'Outfit',sans-serif; font-weight:500; color:var(--rosa); font-size:0.72rem; letter-spacing:0.32em; text-transform:uppercase; margin-bottom:0.9rem; }
+.home-title { position:relative; z-index:1; font-size:1.9rem; margin-bottom:0.7rem; }
+.home-sub { position:relative; z-index:1; color:var(--texto-hint); font-size:0.88rem; font-weight:300; max-width:26ch; margin:0 auto 1.8rem; line-height:1.65; }
+
+.pill-row { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:0.6rem; flex-wrap:wrap; }
+.pill { font-family:'Outfit',sans-serif; font-weight:500; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; padding:0.85rem 1.6rem; border-radius:999px; cursor:pointer; transition:all 0.2s ease; white-space:nowrap; }
+.pill-solid { background:var(--rojo); color:#FFF; border:1px solid var(--rojo); box-shadow:0 8px 20px rgba(168,35,58,0.18); }
+.pill-solid:hover { background:var(--rojo-hover); border-color:var(--rojo-hover); transform:translateY(-1px); }
+.pill-outline { background:transparent; color:var(--rojo); border:1px solid var(--gris-claro); }
+.pill-outline:hover { border-color:var(--rojo); background:var(--crema); }
+
+.contact-row { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:0.7rem; margin-top:2rem; flex-wrap:wrap; }
+.contact-link { display:flex; align-items:center; gap:0.45rem; text-decoration:none; color:var(--texto-hint); font-family:'Inter',sans-serif; font-weight:400; font-size:0.82rem; }
+.contact-link:hover { color:var(--rojo); }
+.contact-link svg { width:17px; height:17px; flex-shrink:0; }
 
 .consulta-result { background:#FFF; padding:1.5rem; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.08); margin-top:1.5rem; }
 .consulta-result h3 { color:var(--rojo); margin-bottom:1rem; }
@@ -197,58 +214,50 @@ p { line-height:1.6; margin-bottom:1rem; }
 
 <!-- HOME INICIAL -->
 <div id="p-home" class="page active">
-  <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#7B2D2D" transform="rotate(0 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#8B3535" transform="rotate(60 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#7B2D2D" transform="rotate(120 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#6B2525" transform="rotate(180 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#8B3535" transform="rotate(240 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#7B2D2D" transform="rotate(300 50 50)"/>
-    <circle cx="50" cy="50" r="9" fill="#5D3010"/>
-    <circle cx="50" cy="50" r="6" fill="#7A4218"/>
-  </svg>
-  
-  <h1>Amapola Studio</h1>
-  <div class="slogan">Resalta tu belleza natural</div>
-  
-  <div class="home-buttons">
-    <div class="home-btn" onclick="showPage('p-servicios')">
-      <span class="emoji">🌺</span>
-      <span>Nuestros servicios</span>
-    </div>
-    <div class="home-btn" onclick="showPage('p1')">
-      <span class="emoji">📅</span>
-      <span>Reservar turno</span>
-    </div>
-    <div class="home-btn" onclick="showPage('p-consulta')">
-      <span class="emoji">🔍</span>
-      <span>Ya tengo turno</span>
-    </div>
-  </div>
-  
-  <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;margin-top:1.2rem;">
-    <a href="https://www.instagram.com/amapolastudio.cs/" target="_blank" style="display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:var(--rojo);font-weight:600;font-size:0.95rem;background:#FFF;border:1.5px solid var(--rojo);border-radius:20px;padding:0.5rem 1.2rem;transition:all 0.18s;" onmouseover="this.style.background='var(--rojo)';this.style.color='#FFF'" onmouseout="this.style.background='#FFF';this.style.color='var(--rojo)'">📷 @amapolastudio.cs</a>
-    <a href="https://wa.me/5491159029792" target="_blank" style="display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:#FFF;font-weight:600;font-size:0.95rem;background:#25D366;border:1.5px solid #25D366;border-radius:20px;padding:0.5rem 1.2rem;transition:all 0.18s;" onmouseover="this.style.background='#1DA851'" onmouseout="this.style.background='#25D366'">📞 +54 9 11 5902-9792</a>
-  </div>
-</div>
+  <div class="home-hero">
+    <svg class="home-watermark" viewBox="0 0 100 100" aria-hidden="true">
+      <g transform="translate(50 46)">
+        <ellipse class="petal" cx="0" cy="-27" rx="13" ry="26" transform="rotate(0)"/>
+        <ellipse class="petal" cx="0" cy="-27" rx="13" ry="26" transform="rotate(60)"/>
+        <ellipse class="petal" cx="0" cy="-27" rx="13" ry="26" transform="rotate(120)"/>
+        <ellipse class="petal" cx="0" cy="-27" rx="13" ry="26" transform="rotate(180)"/>
+        <ellipse class="petal" cx="0" cy="-27" rx="13" ry="26" transform="rotate(240)"/>
+        <ellipse class="petal" cx="0" cy="-27" rx="13" ry="26" transform="rotate(300)"/>
+      </g>
+    </svg>
 
-<!-- SERVICIOS -->
-<div id="p-servicios" class="page">
-  <button class="btn-volver" onclick="showPage('p-home')" title="Volver">&#8592;</button>
-  <svg class="logo-svg clickable-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" onclick="volverHome()">
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#7B2D2D" transform="rotate(0 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#8B3535" transform="rotate(60 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#7B2D2D" transform="rotate(120 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#6B2525" transform="rotate(180 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#8B3535" transform="rotate(240 50 50)"/>
-    <ellipse cx="50" cy="27" rx="11" ry="22" fill="#7B2D2D" transform="rotate(300 50 50)"/>
-    <circle cx="50" cy="50" r="9" fill="#5D3010"/>
-    <circle cx="50" cy="50" r="6" fill="#7A4218"/>
-  </svg>
-  
-  <h1>Nuestros Servicios</h1>
-  
-  <div id="servicios-list" style="width:100%;max-width:520px;margin:0 auto;"></div>
+    <span class="home-eyebrow">Amapola Studio</span>
+    <h1 class="home-title">Resaltá tu belleza natural</h1>
+    <p class="home-sub">Estética facial y corporal en Ituzaingó. Cada tratamiento, pensado para vos.</p>
+
+    <div class="pill-row">
+      <div class="pill pill-solid" onclick="showPage('p1')">Reservar turno</div>
+      <div class="pill pill-outline" onclick="showPage('p-consulta')">Ya tengo turno</div>
+    </div>
+
+    <div class="contact-row">
+      <a class="contact-link" href="https://www.instagram.com/amapolastudio.cs/" target="_blank">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#FED576"/>
+              <stop offset="26%" stop-color="#F47133"/>
+              <stop offset="61%" stop-color="#BC3081"/>
+              <stop offset="100%" stop-color="#4C63D2"/>
+            </linearGradient>
+          </defs>
+          <path fill="url(#ig-grad)" d="M12 2c2.72 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.22.6 1.77 1.15.55.55.9 1.11 1.15 1.77.25.64.42 1.37.47 2.43.05 1.06.06 1.4.06 4.12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.77 4.9 4.9 0 0 1-1.77 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.4.06-4.12.06s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.77-1.15 4.9 4.9 0 0 1-1.15-1.77c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.72 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43.26-.66.6-1.22 1.15-1.77A4.9 4.9 0 0 1 5.45 2.53c.64-.25 1.37-.42 2.43-.47C8.94 2.01 9.28 2 12 2zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-8.4a1.17 1.17 0 1 1-2.34 0 1.17 1.17 0 0 1 2.34 0z"/>
+        </svg>
+        @amapolastudio.cs
+      </a>
+      <a class="contact-link" href="https://wa.me/5491159029792" target="_blank">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#25D366" d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33C8.5 21.5 10.2 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.29 14.13c-.23.65-1.15 1.19-1.87 1.34-.49.1-1.14.19-3.32-.71-2.78-1.15-4.58-3.97-4.72-4.15-.14-.19-1.12-1.49-1.12-2.84 0-1.35.71-2.01.96-2.28.26-.28.56-.34.75-.34h.54c.17 0 .4-.06.63.48.23.55.79 1.9.86 2.04.07.14.11.3.02.49-.09.19-.14.3-.28.46-.14.16-.29.36-.42.48-.14.14-.28.28-.12.55.16.28.71 1.17 1.53 1.9 1.05.94 1.94 1.23 2.22 1.37.28.14.44.12.6-.07.16-.19.68-.79.87-1.06.19-.28.38-.23.63-.14.26.09 1.63.77 1.91.91.28.14.47.21.54.33.07.12.07.7-.16 1.35z"/>
+        </svg>
+        +54 9 11 5902-9792
+      </a>
+    </div>
+  </div>
 </div>
 
 <!-- CONSULTA TURNO -->
@@ -355,7 +364,7 @@ p { line-height:1.6; margin-bottom:1rem; }
 
     <div style="position:relative;margin-top:0.2rem;">
       <input type="email" class="dk-in" id="inp-email" placeholder="Email (opcional)" style="padding-right:2.5rem;">
-      <span style="position:absolute;right:0.8rem;top:50%;transform:translateY(-50%);font-size:0.75rem;color:var(--dorado);font-weight:600;pointer-events:none;">OPT</span>
+      <span style="position:absolute;right:0.8rem;top:50%;transform:translateY(-50%);font-size:0.75rem;color:var(--rojo-hover);font-weight:600;pointer-events:none;">OPT</span>
     </div>
     <p style="font-size:0.78rem;color:var(--texto-hint);margin-top:-0.4rem;margin-bottom:0.8rem;text-align:center;">✉️ Si ingresás tu email te mandamos la confirmación del turno</p>
 
@@ -419,7 +428,7 @@ p { line-height:1.6; margin-bottom:1rem; }
     <div class="card-box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;">
         <button class="btn-rojo-sm" onclick="mesAnt()">‹</button>
-        <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:1.15rem;" id="mes-año"></div>
+        <div style="font-family:'Outfit',sans-serif;font-weight:600;font-size:1.15rem;" id="mes-año"></div>
         <button class="btn-rojo-sm" onclick="mesSig()">›</button>
       </div>
       <div class="cal-grid">
@@ -473,7 +482,7 @@ p { line-height:1.6; margin-bottom:1rem; }
     </div>
     <div style="background:#FFF;border:2.5px solid var(--rojo);border-radius:14px;padding:1.2rem 1rem;margin-bottom:1.5rem;text-align:center;">
       <div style="font-size:0.75rem;color:var(--texto-hint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.3rem;font-weight:600;">Alias de transferencia</div>
-      <div id="alias-show" style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--rojo);letter-spacing:0.04em;"></div>
+      <div id="alias-show" style="font-family:'Outfit',sans-serif;font-size:1.8rem;font-weight:600;color:var(--rojo);letter-spacing:0.04em;"></div>
       <div style="font-size:0.75rem;color:var(--texto-hint);margin-top:0.4rem;">Mercado Pago / banco · Pesos argentinos</div>
     </div>
     
@@ -497,7 +506,7 @@ p { line-height:1.6; margin-bottom:1rem; }
     <div style="background:#FFF3CD;border-left:4px solid #FFC107;border-radius:8px;padding:1rem;margin-bottom:1.2rem;font-size:0.88rem;text-align:left;line-height:1.6;">
       <strong>⚠️ Tu turno está reservado pero pendiente de confirmación.</strong><br>
       Para confirmarlo, transferí la seña de <strong id="sena-monto-wp"></strong> al alias:<br>
-      <div style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--rojo);font-weight:700;text-align:center;margin:0.6rem 0;" id="sena-alias-wp"></div>
+      <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;color:var(--rojo);font-weight:600;text-align:center;margin:0.6rem 0;" id="sena-alias-wp"></div>
       Luego enviá el comprobante por WhatsApp usando el botón de abajo.
     </div>
 
@@ -534,7 +543,7 @@ p { line-height:1.6; margin-bottom:1rem; }
       📎 Enviar comprobante por WhatsApp
     </a>
 
-    <div style="margin-top:0.5rem;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--dorado);font-size:0.95rem;">Te esperamos en Amapola Studio</div>
+    <div style="margin-top:0.5rem;font-family:'Outfit',sans-serif;font-weight:500;color:var(--rojo-hover);font-size:0.95rem;">Te esperamos en Amapola Studio</div>
     <a class="ig-link" href="https://www.instagram.com/amapolastudio.cs/" target="_blank">📷 @amapolastudio.cs</a>
   </div>
 </div>
@@ -805,51 +814,6 @@ p { line-height:1.6; margin-bottom:1rem; }
 </div>
 
 <script>
-// SERVICIOS DATA
-const SERVICIOS = [
-  {
-    titulo: 'Lifting de Pestañas',
-    duracion: '1 hora',
-    precio: 20000,
-    descripcion: 'Es un tratamiento que consiste en el arqueamiento de la pestaña natural mediante un proceso químico. Como resultado conseguimos unas pestañas con curvatura, ampliando y mejorando la mirada. Incluye tintura para darle definición al trabajo, y una nutrición que hidrata el pelo desde la raíz. No duele, y se adapta a cualquier largo de pestañas.',
-    advertencia: 'Luego del lifting las pestañas no pueden mojarse ni pintarse por 24 hs.'
-  },
-  {
-    titulo: 'Perfilado de Cejas',
-    duracion: '30 minutos',
-    precio: 13000,
-    descripcion: 'Realizado con pinza, tijera y cepillo. Dejamos las cejas prolijas, tratando de afinar lo menos posible y adaptando la forma al tipo de rostro y gustos del cliente.'
-  },
-  {
-    titulo: 'Laminado de Cejas',
-    duracion: '30-45 minutos',
-    precio: 20000,
-    descripcion: 'Proceso químico que consiste en dejar las cejas alisadas, definidas, prolijas y maleables para poder peinarlas en la forma deseada. Incluye perfilado de cejas, y una nutrición que hidrata el pelo desde la raíz.',
-    advertencia: 'Luego del laminado las cejas no pueden mojarse ni pintarse por 24 hs.'
-  },
-  {
-    titulo: 'Limpieza Facial Profunda',
-    duracion: '1 hora 45 minutos',
-    precio: 35000,
-    descripcion: 'Incluye anamnesis, higiene, punta de diamante, extracciones, máscara, cabina led, hidratación y protección. Todo acorde al biotipo cutáneo y necesidades de la piel.'
-  },
-  {
-    titulo: 'Peeling',
-    duracion: '45 minutos',
-    precio: 40000,
-    descripcion: 'Consiste en una exfoliación química mediante ácidos para renovar la piel y darle lo que necesita: luminosidad, corregir manchas, hidratación, atenuar líneas de expresión, etc.'
-  },
-  {
-    titulo: 'Drenaje Linfático Manual',
-    duracion: '1 hora',
-    precio: 35000,
-    descripcion: 'Es un conjunto de maniobras suaves, lentas y rítmicas que estimulan el sistema linfático, favoreciendo la eliminación de líquidos retenidos y toxinas del organismo. Ayuda a desinflamar, mejora la circulación, aporta una profunda sensación de ligereza y bienestar, y colabora con el correcto funcionamiento del sistema inmunológico.',
-    indicaciones: 'Está indicado para: retención de líquidos, piernas cansadas, edemas, sensación de pesadez, estrés, post operatorios (siempre con indicación médica), embarazo a partir del 3° trimestre (con autorización del obstetra), personas que buscan bienestar general y desinflamar zonas con retención de líquidos.',
-    contraindicaciones: 'No pueden realizarlo personas que presenten: infecciones agudas, procesos oncológicos activos, trombosis, insuficiencia cardíaca, afecciones renales severas, período menstrual (en caso de trabajar la zona abdominal).',
-    extras: 'Incluye bases linfáticas + una zona (piernas, abdomen o rostro). Precio: $35.000. Zona extra: $12.000.'
-  }
-];
-
 // TRATAMIENTOS
 const TRATS = {
   lp:      { n:'Lifting de pestañas',                        dur:60,  precio:20000, camilla:'larga' },
@@ -1229,10 +1193,6 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('p-admin-login').classList.remove('active');
   document.getElementById(id).classList.add('active');
-  
-  if (id === 'p-servicios') {
-    renderServicios();
-  }
 }
 
 function volverHome() {
@@ -1246,27 +1206,6 @@ function volverAp1() {
   showPage('p1');
 }
 
-
-// SERVICIOS — lista vertical
-function renderServicios() {
-  const container = document.getElementById('servicios-list');
-  let html = '';
-  SERVICIOS.forEach(s => {
-    html += `<div class="service-card">
-      <h3 style="font-family:'Playfair Display',serif;font-style:normal;font-size:1.15rem;color:var(--rojo);margin-bottom:0.5rem;">${s.titulo}</h3>
-      <div style="display:flex;gap:1rem;margin-bottom:0.7rem;font-size:0.85rem;">
-        <span style="color:var(--dorado);font-weight:600;">⏱️ ${s.duracion}</span>
-        <span style="color:var(--rojo);font-weight:700;">${fPeso(s.precio)}</span>
-      </div>
-      <div style="font-size:0.9rem;line-height:1.65;color:var(--texto);">${s.descripcion}</div>`;
-    if (s.advertencia) html += `<div class="service-card .warning" style="background:#FFF9E6;border-left:3px solid #C9A227;padding:0.6rem 0.8rem;margin-top:0.7rem;font-size:0.83rem;border-radius:4px;line-height:1.5;">⚠️ ${s.advertencia}</div>`;
-    if (s.indicaciones) html += `<div style="background:#EAF4EA;border-left:3px solid #4A8A4A;padding:0.6rem 0.8rem;margin-top:0.7rem;font-size:0.83rem;border-radius:4px;line-height:1.5;">✅ ${s.indicaciones}</div>`;
-    if (s.contraindicaciones) html += `<div style="background:#FAE8E8;border-left:3px solid #B04040;padding:0.6rem 0.8rem;margin-top:0.7rem;font-size:0.83rem;border-radius:4px;line-height:1.5;">❌ Contraindicaciones: ${s.contraindicaciones}</div>`;
-    if (s.extras) html += `<div style="background:#FFF9E6;border-left:3px solid #C9A227;padding:0.6rem 0.8rem;margin-top:0.7rem;font-size:0.83rem;border-radius:4px;">💰 ${s.extras}</div>`;
-    html += `</div>`;
-  });
-  container.innerHTML = html;
-}
 
 // CONSULTA TURNO
 async function buscarTurnos() {
