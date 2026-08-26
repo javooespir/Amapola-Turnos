@@ -531,6 +531,10 @@ p { line-height:1.6; margin-bottom:1rem; }
       Ya envié el comprobante ✓
     </button>
 
+    <div style="background:#FFF;border:1.5px solid var(--gris-claro);border-radius:10px;padding:0.9rem 1rem;margin-top:1rem;font-size:0.86rem;line-height:1.55;color:var(--texto);">
+      Atendemos en <b>Besares 327</b>, entre Lavalle y Olazábal.<br>Es una casa al lado de un kiosco 🏠
+    </div>
+
     <div style="margin-top:1rem;font-size:0.78rem;color:var(--texto-hint);line-height:1.5;">
       Sin el comprobante, el turno puede ser liberado a otro cliente.
     </div>
@@ -555,7 +559,11 @@ p { line-height:1.6; margin-bottom:1rem; }
       📎 Enviar comprobante por WhatsApp
     </a>
 
-    <div style="margin-top:0.5rem;font-family:'Outfit',sans-serif;font-weight:500;color:var(--rojo-hover);font-size:0.95rem;">Te esperamos en Amapola Studio</div>
+    <div style="background:#FFF;border:1.5px solid var(--gris-claro);border-radius:10px;padding:0.9rem 1rem;margin-top:1rem;font-size:0.86rem;line-height:1.55;color:var(--texto);">
+      Atendemos en <b>Besares 327</b>, entre Lavalle y Olazábal.<br>Es una casa al lado de un kiosco 🏠
+    </div>
+
+    <div style="margin-top:1rem;font-family:'Outfit',sans-serif;font-weight:500;color:var(--rojo-hover);font-size:0.95rem;">Te esperamos en Amapola Studio</div>
     <a class="ig-link" href="https://www.instagram.com/amapolastudio.cs/" target="_blank">📷 @amapolastudio.cs</a>
   </div>
 </div>
@@ -995,6 +1003,20 @@ const hoyD = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
 const esDrenaje = k => ['dl','combo5','combo6','combo9','combo10'].includes(k);
 const montoEfectivo = t => t.noAsistio ? (t.señaPagada ? (Number(t.seña) || 10000) : 0) : (Number(t.precio) || 0);
 
+// Dirección del studio — se suma a todos los mensajes automáticos al cliente
+const DIRECCION_STUDIO = 'Atendemos en Besares 327 entre Lavalle y Olazábal. Es una casa al lado de un kiosco 🏠';
+
+// Anticipación mínima para reservar desde la web (el admin no tiene este límite)
+const MIN_ANTICIPACION = 5 * 60; // 5 horas en minutos
+
+// true si el slot (fecha + minuto de inicio) ya no cumple la anticipación mínima
+function sinAnticipacion(fecha, minI) {
+  const ahora = new Date();
+  const inicio = new Date(fecha + 'T00:00:00');
+  inicio.setMinutes(minI);
+  return (inicio - ahora) / 60000 < MIN_ANTICIPACION;
+}
+
 function getPrecio() {
   const precios = getPrecios();
   const t = TRATS[est.trat];
@@ -1009,7 +1031,7 @@ function getPrecio() {
 // Generar mensaje personalizado por tratamiento
 function generarMensajeRecordatorio(tratN, tratK, fecha, hora, zonas=[]) {
   const header = 'Hola, te recordamos tu turno de ' + tratN + ' el día ' + fecha + ' a las ' + hora + ' hs. 🌺\n\n';
-  const footer = '\n\nRecordá que contamos con 15 minutos de tolerancia pasado el horario del turno. La seña es reembolsable únicamente cancelando con más de 24hs de anticipación, de lo contrario se pierde.\n\nEste es un momento para vos! Vení tranquila/o a disfrutarlo 🩷\nCualquier duda podés consultarme.\n\nAmapola Studio';
+  const footer = DIRECCION_STUDIO + '\n\nRecordá que contamos con 15 minutos de tolerancia pasado el horario del turno. La seña es reembolsable únicamente cancelando con más de 24hs de anticipación, de lo contrario se pierde.\n\nEste es un momento para vos! Vení tranquila/o a disfrutarlo 🩷\nCualquier duda podés consultarme.\n\nAmapola Studio';
 
   // ── Tratamientos individuales ──
   const individual = {
@@ -1067,7 +1089,7 @@ function generarMensajeRecordatorio(tratN, tratK, fecha, hora, zonas=[]) {
     instrucciones = individual[tratK] || '';
   }
 
-  return header + (instrucciones ? instrucciones + footer : footer);
+  return header + (instrucciones ? instrucciones + '\n\n' : '') + footer;
 }
 
 
@@ -1559,21 +1581,22 @@ function renderHorarios() {
     }).flat().filter(r => r && r[0] < r[1]);
   }
 
-  // Calcular minutos actuales para bloquear horarios pasados si es hoy
-  const esHoy = est.fecha === fISOlocal(new Date());
-  const ahora = new Date();
-  const minutosActuales = ahora.getHours() * 60 + ahora.getMinutes();
-
   let html = '';
+  let hayAlguno = false;
   rangos.forEach(([inicio, fin]) => {
     for (let m = inicio; m < fin; m += 30) {
-      const yaPaso = esHoy && m <= minutosActuales;
-      const disponible = !yaPaso && esDisp(m, est.trat, est.fecha);
+      // esDisp() ya cubre horarios pasados y la anticipación mínima de 5 hs
+      const disponible = esDisp(m, est.trat, est.fecha);
+      if (disponible) hayAlguno = true;
       const selected = est.hora === m;
       html += `<div class="hs-chip ${disponible ? '' : 'disabled'} ${selected ? 'selected' : ''}"
                onclick="${disponible ? `selHora(${m})` : ''}">${mStr(m)}</div>`;
     }
   });
+
+  if (!hayAlguno) {
+    html = '<p style="text-align:center;padding:1rem;color:#C0392B;font-size:0.9rem;">⚠️ Sin turnos disponibles este día. Recordá que las reservas se hacen con al menos 5 horas de anticipación.</p>';
+  }
 
   document.getElementById('hs-grid').innerHTML = html;
 }
@@ -1581,6 +1604,9 @@ function renderHorarios() {
 function esDisp(minI, k, fecha) {
   const t = TRATS[k];
   const fin = minI + t.dur;
+
+  // Anticipación mínima (5 hs) — solo aplica a la reserva web
+  if (sinAnticipacion(fecha, minI)) return false;
 
   const fecha2 = new Date(fecha + 'T12:00');
   const diaSemana = fecha2.getDay();
@@ -1689,6 +1715,37 @@ async function irFin() {
   // Detectar si es modificación
   const esModificacion = turnoEnModificacion !== null;
   const turnoAnterior = esModificacion ? turnoEnModificacion : null;
+
+  // ── Revalidar contra Supabase antes de guardar ──────────────────────
+  // Entre que la clienta elige el horario y confirma pueden pasar varios
+  // minutos: en ese lapso la admin puede haber bloqueado la agenda o
+  // alguien más puede haber tomado el mismo horario. Sin este chequeo el
+  // turno se insertaba igual.
+  const btnRev = document.querySelector('[onclick="irFin()"]');
+  if (btnRev) { btnRev.disabled = true; btnRev.textContent = 'Verificando disponibilidad...'; }
+
+  try { await sincronizarDesdeSupabase(); } catch(e) {}
+
+  // Al modificar, el turno original no debe contarse como conflicto propio
+  const cacheOriginal = _turnosCache;
+  if (esModificacion) _turnosCache = _turnosCache.filter(x => x.id !== turnoAnterior.id);
+  const sigueLibre = esDisp(est.hora, est.trat, est.fecha);
+  _turnosCache = cacheOriginal;
+
+  if (!sigueLibre) {
+    if (btnRev) { btnRev.disabled = false; btnRev.textContent = 'Finalizar reserva'; }
+    const motivo = sinAnticipacion(est.fecha, est.hora)
+      ? 'Las reservas se hacen con al menos 5 horas de anticipación.'
+      : 'Ese horario ya no está disponible (puede haberlo tomado otra clienta o haber sido bloqueado).';
+    alert('⚠️ No pudimos confirmar el turno.\n\n' + motivo + '\n\nElegí otro horario, por favor.');
+    est.hora = null;
+    showPage('p2');
+    renderHorarios();
+    document.getElementById('btn-conf').style.display = 'none';
+    return;
+  }
+  if (btnRev) { btnRev.textContent = 'Finalizar reserva'; btnRev.disabled = false; }
+  // ────────────────────────────────────────────────────────────────────
 
   // Determinar seña: mantener si es 24hs antes, sino nueva
   let señaPagada = false;
