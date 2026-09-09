@@ -819,6 +819,19 @@ p { line-height:1.6; margin-bottom:1rem; }
         <button class="btn-rojo-sm" style="margin-top:1.2rem;" onclick="guardarConfig()">Guardar configuración</button>
       </div>
       <div class="config-section-dark">
+        <h3>🕐 Horarios de atención</h3>
+        <p style="font-size:0.82rem;color:var(--adm-hint);margin-bottom:1rem;line-height:1.5;">
+          Los turnos tienen que <strong>terminar</strong> dentro del horario. Si un martes cerrás el corte a las 10:30,
+          un turno de 1 hora se puede sacar hasta las 9:30 y uno de 30 min hasta las 10:00.<br>
+          Usá el <strong>corte</strong> para los bloqueos del medio del día (rollers, entrenamiento). Dejalo vacío si ese día trabajás corrido.
+        </p>
+        <div id="horarios-editor"></div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem;">
+          <button class="btn-rojo-sm" onclick="guardarHorarios()">Guardar horarios</button>
+          <button class="btn-rojo-sm" style="background:var(--adm-surface);border:1px solid var(--adm-border);" onclick="restaurarHorariosNormales()">Restaurar horario normal</button>
+        </div>
+      </div>
+      <div class="config-section-dark">
         <h3>Precios de tratamientos</h3>
         <div id="precios-editor"></div>
         <button class="btn-rojo-sm" style="margin-top:1rem;" onclick="guardarPrecios()">Guardar precios</button>
@@ -885,6 +898,7 @@ let agendaFechaActual = new Date();
     // Fallback: usar localStorage
     try { _turnosCache = JSON.parse(localStorage.getItem('amp_t')||'[]'); } catch { _turnosCache = []; }
     try { _bloqueosCache = JSON.parse(localStorage.getItem('amp_blq')||'[]'); } catch { _bloqueosCache = []; }
+    try { _horariosCache = JSON.parse(localStorage.getItem('amp_hs')||'null'); } catch { _horariosCache = null; }
   }
 
   // Cargar precios desde Supabase (para que el admin siempre tenga los precios actuales)
@@ -962,14 +976,18 @@ async function sbDelete(tabla, filtro) {
 // ── Cache local (para que esDisp() funcione sincrónicamente) ──
 let _turnosCache = [];
 let _bloqueosCache = [];
+// Horarios por día de semana editables desde el panel (rollers, entrenamiento, etc.)
+let _horariosCache = null;
 
 async function sincronizarDesdeSupabase() {
-  const [t, b] = await Promise.all([
+  const [t, b, h] = await Promise.all([
     sbGet('turnos', 'order=fecha.asc'),
-    sbGet('bloqueos', 'order=fecha.asc')
+    sbGet('bloqueos', 'order=fecha.asc'),
+    sbGet('horarios_semana', 'order=dia.asc')
   ]);
   if (t) { _turnosCache = t; localStorage.setItem('amp_t', JSON.stringify(t)); }
   if (b) { _bloqueosCache = b; localStorage.setItem('amp_blq', JSON.stringify(b)); }
+  if (h) { _horariosCache = h; localStorage.setItem('amp_hs', JSON.stringify(h)); }
 }
 
 // Sincronizar cada 15 segundos para ver reservas de otros en tiempo real
@@ -1515,16 +1533,32 @@ function selFecha(f) {
 }
 
 // Overrides especiales para esta semana (8-12 junio)
+// Convierte un horario configurado (abre/cierra + corte opcional) en rangos.
+// El corte parte el día en dos: por ejemplo 9-10:30 y 14-20 los martes.
+function rangosDesdeHorario(h) {
+  if (!h || h.abre == null || h.cierra == null) return [];
+  const abre = Number(h.abre), cierra = Number(h.cierra);
+  if (h.corte_ini != null && h.corte_fin != null) {
+    const ci = Number(h.corte_ini), cf = Number(h.corte_fin);
+    return [[abre, ci], [cf, cierra]].filter(r => r[0] < r[1]);
+  }
+  return abre < cierra ? [[abre, cierra]] : [];
+}
+
+// Horario configurado para un día de semana, o null si no hay nada cargado
+function getHorarioDia(diaSemana) {
+  if (!Array.isArray(_horariosCache)) return null;
+  const h = _horariosCache.find(x => Number(x.dia) === diaSemana);
+  return h || null;
+}
+
 function getHDIASespecial(fecha_str) {
   const fecha = new Date(fecha_str + 'T12:00');
-  const dia = fecha.getDate();
-  const mes = fecha.getMonth() + 1;
   const diaSemana = fecha.getDay();
 
-  // Miércoles 10 junio y viernes 12 junio → 9-10:30 y 14-20:30
-  if (mes === 6 && ((diaSemana === 3 && dia === 10) || (diaSemana === 5 && dia === 12))) {
-    return [[9*60, 10.5*60], [14*60, 20.5*60]];
-  }
+  // Los horarios del panel mandan; HDIAS queda como respaldo si no hay nada cargado
+  const conf = getHorarioDia(diaSemana);
+  if (conf) return rangosDesdeHorario(conf);
 
   return HDIAS[diaSemana] || [];
 }
@@ -2998,6 +3032,7 @@ function renderConfig() {
     </div>`;
   });
   document.getElementById('precios-editor').innerHTML = html;
+  renderHorariosEditor();
   renderMensajesEditor();
 }
 
@@ -3019,6 +3054,144 @@ async function guardarConfig() {
   } catch(e) {
     alert('Configuración guardada localmente (sin conexión)');
   }
+}
+
+// ── HORARIOS POR DÍA DE SEMANA ──
+const DIAS_SEM = [
+  { n: 1, label: 'Lunes' },
+  { n: 2, label: 'Martes' },
+  { n: 3, label: 'Miércoles' },
+  { n: 4, label: 'Jueves' },
+  { n: 5, label: 'Viernes' },
+  { n: 6, label: 'Sábado' },
+  { n: 0, label: 'Domingo' }
+];
+
+// minutos → "HH:MM" para los <input type="time">
+const hhmm = m => (m == null || m === '') ? '' :
+  String(Math.floor(Number(m) / 60)).padStart(2, '0') + ':' + String(Number(m) % 60).padStart(2, '0');
+
+// "HH:MM" → minutos
+function minDesdeHHMM(v) {
+  if (!v) return null;
+  const [h, m] = v.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+function renderHorariosEditor() {
+  let html = '';
+  DIAS_SEM.forEach(d => {
+    const conf = getHorarioDia(d.n);
+    // Si no hay nada cargado, mostrar el horario base de HDIAS
+    const base = HDIAS[d.n] || [];
+    const abre    = conf ? conf.abre     : (base.length ? base[0][0] : null);
+    const cierra  = conf ? conf.cierra   : (base.length ? base[base.length - 1][1] : null);
+    const corteI  = conf ? conf.corte_ini : (base.length > 1 ? base[0][1] : null);
+    const corteF  = conf ? conf.corte_fin : (base.length > 1 ? base[1][0] : null);
+    const cerrado = abre == null || cierra == null;
+
+    html += `<div style="border:1px solid var(--adm-border);border-radius:8px;padding:0.8rem;margin-bottom:0.6rem;background:var(--adm-surface);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
+        <strong style="color:var(--adm-text);font-size:0.92rem;">${d.label}</strong>
+        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;color:var(--adm-hint);cursor:pointer;">
+          <input type="checkbox" id="hs-cerrado-${d.n}" ${cerrado ? 'checked' : ''} onchange="toggleDiaCerrado(${d.n})" style="cursor:pointer;">
+          Cerrado
+        </label>
+      </div>
+      <div id="hs-campos-${d.n}" style="display:${cerrado ? 'none' : 'block'};">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:110px;">
+            <label style="display:block;font-size:0.72rem;color:var(--adm-hint);margin-bottom:0.2rem;">Abre</label>
+            <input type="time" class="dk-in-dark" id="hs-abre-${d.n}" value="${hhmm(abre)}" style="margin:0;">
+          </div>
+          <div style="flex:1;min-width:110px;">
+            <label style="display:block;font-size:0.72rem;color:var(--adm-hint);margin-bottom:0.2rem;">Cierra</label>
+            <input type="time" class="dk-in-dark" id="hs-cierra-${d.n}" value="${hhmm(cierra)}" style="margin:0;">
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;margin-top:0.5rem;">
+          <div style="flex:1;min-width:110px;">
+            <label style="display:block;font-size:0.72rem;color:var(--adm-hint);margin-bottom:0.2rem;">Corte desde</label>
+            <input type="time" class="dk-in-dark" id="hs-corte-ini-${d.n}" value="${hhmm(corteI)}" style="margin:0;">
+          </div>
+          <div style="flex:1;min-width:110px;">
+            <label style="display:block;font-size:0.72rem;color:var(--adm-hint);margin-bottom:0.2rem;">Corte hasta</label>
+            <input type="time" class="dk-in-dark" id="hs-corte-fin-${d.n}" value="${hhmm(corteF)}" style="margin:0;">
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('horarios-editor').innerHTML = html;
+}
+
+function toggleDiaCerrado(dia) {
+  const cerrado = document.getElementById('hs-cerrado-' + dia).checked;
+  document.getElementById('hs-campos-' + dia).style.display = cerrado ? 'none' : 'block';
+}
+
+function leerHorariosEditor() {
+  const filas = [];
+  for (const d of DIAS_SEM) {
+    const cerrado = document.getElementById('hs-cerrado-' + d.n).checked;
+    if (cerrado) {
+      filas.push({ dia: d.n, abre: null, cierra: null, corte_ini: null, corte_fin: null });
+      continue;
+    }
+    const abre   = minDesdeHHMM(document.getElementById('hs-abre-' + d.n).value);
+    const cierra = minDesdeHHMM(document.getElementById('hs-cierra-' + d.n).value);
+    const ci     = minDesdeHHMM(document.getElementById('hs-corte-ini-' + d.n).value);
+    const cf     = minDesdeHHMM(document.getElementById('hs-corte-fin-' + d.n).value);
+
+    if (abre == null || cierra == null) return { error: `${d.label}: falta la hora de apertura o de cierre.` };
+    if (abre >= cierra) return { error: `${d.label}: la hora de cierre tiene que ser posterior a la de apertura.` };
+    if ((ci == null) !== (cf == null)) return { error: `${d.label}: el corte necesita las dos horas, o ninguna.` };
+    if (ci != null) {
+      if (ci >= cf) return { error: `${d.label}: el corte termina antes de empezar.` };
+      if (ci < abre || cf > cierra) return { error: `${d.label}: el corte tiene que estar dentro del horario de atención.` };
+    }
+    filas.push({ dia: d.n, abre, cierra, corte_ini: ci, corte_fin: cf });
+  }
+  return { filas };
+}
+
+async function guardarHorarios() {
+  const res = leerHorariosEditor();
+  if (res.error) { alert('⚠️ ' + res.error); return; }
+
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/horarios_semana', {
+      method: 'POST',
+      headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(res.filas)
+    });
+    if (!r.ok) { alert('No se pudieron guardar los horarios. Revisá la conexión e intentá de nuevo.'); return; }
+    _horariosCache = res.filas;
+    localStorage.setItem('amp_hs', JSON.stringify(res.filas));
+    alert('Horarios guardados ✓\n\nLas clientas ya ven la agenda con estos horarios.');
+    renderHorariosEditor();
+    if (tabActual === 'agenda') renderAgenda();
+  } catch(e) {
+    alert('No se pudieron guardar los horarios (sin conexión).');
+  }
+}
+
+function restaurarHorariosNormales() {
+  if (!confirm('Volver al horario normal?\n\nLunes a viernes 9 a 20, sábado 10 a 16, domingo cerrado, sin cortes.\n\nDespués tenés que apretar \"Guardar horarios\".')) return;
+  DIAS_SEM.forEach(d => {
+    const base = HDIAS[d.n] || [];
+    const cerrado = base.length === 0;
+    document.getElementById('hs-cerrado-' + d.n).checked = cerrado;
+    document.getElementById('hs-campos-' + d.n).style.display = cerrado ? 'none' : 'block';
+    if (!cerrado) {
+      document.getElementById('hs-abre-' + d.n).value = hhmm(base[0][0]);
+      document.getElementById('hs-cierra-' + d.n).value = hhmm(base[base.length - 1][1]);
+      document.getElementById('hs-corte-ini-' + d.n).value = '';
+      document.getElementById('hs-corte-fin-' + d.n).value = '';
+    }
+  });
+  alert('Listo. Revisá y apretá "Guardar horarios" para aplicarlo.');
 }
 
 async function guardarPrecios() {
