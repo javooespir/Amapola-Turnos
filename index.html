@@ -1377,7 +1377,7 @@ body:not(.is-admin) .toasts { bottom: calc(1.25rem + env(safe-area-inset-bottom)
           <div id="precios-editor"></div>
           <details class="panel">
             <summary><span><span class="panel-title">Mensajes de WhatsApp</span><br><span class="muted small">Indicaciones que se mandan al recordar cada turno</span></span><i data-ic="chevron-down"></i></summary>
-            <p class="muted small" style="margin-top:1rem">Dejá vacío para usar el texto por defecto. Se guardan en este dispositivo.</p>
+            <p class="muted small" style="margin-top:1rem">Dejá vacío para usar el texto por defecto. Se sincronizan en todos los dispositivos.</p>
             <div id="mensajes-editor" style="margin-top:1rem"></div>
             <button type="button" class="btn btn-primary" style="margin-top:.5rem" onclick="guardarMensajes()">Guardar mensajes</button>
           </details>
@@ -1424,7 +1424,7 @@ body:not(.is-admin) .toasts { bottom: calc(1.25rem + env(safe-area-inset-bottom)
             <div class="field">
               <label for="cfg-wa-business">WhatsApp Business</label>
               <input type="text" class="input" id="cfg-wa-business" inputmode="numeric" placeholder="5491159029792">
-              <p class="hint">Número que usa el botón de WhatsApp del panel. Vacío = el normal. Se guarda solo en este dispositivo.</p>
+              <p class="hint">Número que usa el botón de WhatsApp del panel. Vacío = el normal. Se sincroniza en todos los dispositivos.</p>
             </div>
             <div><button type="button" class="btn btn-primary" onclick="guardarConfig()">Guardar ajustes</button></div>
           </section>
@@ -1649,7 +1649,14 @@ let agendaFechaActual = new Date();
     const cd = await cr.json();
     if (Array.isArray(cd) && cd.length > 0) {
       const override = {};
-      cd.forEach(row => { override[row.key] = row.value; });
+      cd.forEach(row => {
+        if (row.key === 'pass') return; // la contraseña nunca viaja por config
+        if (row.key === 'mensajes') {
+          try { setCfgMensajes(JSON.parse(row.value || '{}')); } catch(e) {}
+          return;
+        }
+        override[row.key] = row.value;
+      });
       setCfg({ ...getCfg(), ...override });
     }
   } catch(e) {}
@@ -1927,7 +1934,10 @@ function abrirModificarTurno(id, nom, ape, fecha, trat, tratN, horaStr, pagadaSt
     }
 
     const duracion = tObj.dur || 30;
-    const precio = tObj.precio || 0;
+    // Precio real con el que quedó reservado el turno (no el precio base de lista)
+    const tReal = (window._consultaTurnos || {})[id] || getTurnos().find(x => String(x.id) === String(id));
+    const precioLista = getPrecios()[trat] !== undefined ? getPrecios()[trat] : tObj.precio;
+    const precio = Number(tReal && tReal.precio) || Number(precioLista) || 0;
 
     document.getElementById('mod-turno-actual').innerHTML =
       `<p style="font-family:var(--serif);font-size:1.6rem;line-height:1.1;margin-top:.35rem">${capital(fStr)} · ${mStr(hora)} hs</p>
@@ -2046,8 +2056,10 @@ async function buscarTurnos() {
   }
 
   let html = `<div class="consulta-list"><p class="eyebrow plain">Tus turnos · ${turnos.length}</p>`;
+  window._consultaTurnos = {};
 
   turnos.forEach(t => {
+    window._consultaTurnos[t.id] = t;
     const fObj = new Date(t.fecha + 'T12:00');
     const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
     const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -2665,7 +2677,7 @@ function _logoClick() {
 }
 // Agregar listener al logo del home
 document.addEventListener('DOMContentLoaded', () => {
-  const logoHome = document.querySelector('#p-home .logo-svg');
+  const logoHome = document.querySelector('#p-home .eyebrow');
   if (logoHome) logoHome.addEventListener('click', _logoClick);
 });
 // También funciona con hash en Hostinger
@@ -3138,10 +3150,12 @@ function calcularSlotsDisponibles(d) {
       return [ini,fin];
     }).filter(Boolean);
   }
+  const bloqRangos = bloqueos.filter(b => b.tipo === 'rango' && b.hora_inicio != null && b.hora_fin != null);
   const turnosOcupados = getTurnos().filter(t => t.fecha === fechaISO);
   const slots = [];
   rangos.forEach(([ini,fin]) => {
     for (let m = ini; m < fin; m += 30) {
+      if (bloqRangos.some(b => m < Number(b.hora_fin) && m + 30 > Number(b.hora_inicio))) continue;
       const ocupado = turnosOcupados.some(t => {
         const tFin = t.hora + (TRATS[t.trat]?.dur || 60);
         return t.hora <= m && tFin > m;
@@ -3681,7 +3695,7 @@ async function guardarConfig() {
   };
   setCfg(cfg);
   try {
-    const rows = [{ key: 'alias', value: cfg.alias }];
+    const rows = [{ key: 'alias', value: cfg.alias }, { key: 'waBusiness', value: cfg.waBusiness }];
     const r = await fetch(SB_URL + '/rest/v1/config', {
       method: 'POST',
       headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates' },
@@ -3871,14 +3885,23 @@ function renderMensajesEditor() {
   document.getElementById('mensajes-editor').innerHTML = html;
 }
 
-function guardarMensajes() {
+async function guardarMensajes() {
   const msgs = {};
   Object.keys(MSGS_LABELS).forEach(k => {
     const el = document.getElementById('msg-' + k);
     if (el) msgs[k] = el.value.trim();
   });
   setCfgMensajes(msgs);
-  alert('Mensajes guardados ✓');
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/config', {
+      method: 'POST',
+      headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ key: 'mensajes', value: JSON.stringify(msgs) }])
+    });
+    alert(r.ok ? 'Mensajes guardados y sincronizados ✓' : 'Mensajes guardados en este dispositivo');
+  } catch(e) {
+    alert('Mensajes guardados en este dispositivo (sin conexión)');
+  }
 }
 
 // EXPORTAR ICS
