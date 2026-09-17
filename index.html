@@ -6,7 +6,7 @@
 <title>Amapola Studio — Turnos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#FBF5F2">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Cg fill=%22%23A8233A%22%3E%3Cellipse cx=%2250%22 cy=%2227%22 rx=%2211%22 ry=%2222%22/%3E%3Cellipse cx=%2250%22 cy=%2227%22 rx=%2211%22 ry=%2222%22 transform=%22rotate(60 50 50)%22/%3E%3Cellipse cx=%2250%22 cy=%2227%22 rx=%2211%22 ry=%2222%22 transform=%22rotate(120 50 50)%22/%3E%3Cellipse cx=%2250%22 cy=%2227%22 rx=%2211%22 ry=%2222%22 transform=%22rotate(180 50 50)%22/%3E%3Cellipse cx=%2250%22 cy=%2227%22 rx=%2211%22 ry=%2222%22 transform=%22rotate(240 50 50)%22/%3E%3Cellipse cx=%2250%22 cy=%2227%22 rx=%2211%22 ry=%2222%22 transform=%22rotate(300 50 50)%22/%3E%3C/g%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%229%22 fill=%22%234E0F1B%22/%3E%3C/svg%3E">
 <style>
@@ -39,8 +39,8 @@
   --bad-bg: oklch(0.945 0.03 32);
   --wa: #25D366;
 
-  --serif: "Cormorant Garamond", "Cormorant", Georgia, "Times New Roman", serif;
-  --sans: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif: "League Spartan", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sans: "League Spartan", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   --r-xs: 0.5rem;
@@ -747,6 +747,22 @@ body:not(.is-admin) .toasts { bottom: calc(1.25rem + env(safe-area-inset-bottom)
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
+/* ── Tipografía única: League Spartan (la del logo). Sin cursivas: el acento de los títulos es solo de color ── */
+em, .it, .bk .note { font-style: normal; }
+.serif { font-weight: 500; }
+.display { font-weight: 600; font-size: clamp(2rem, 5.6vw, 2.9rem); line-height: 1.02; letter-spacing: -0.02em; }
+.title { font-weight: 600; font-size: clamp(1.9rem, 5vw, 2.5rem); line-height: 1.05; letter-spacing: -0.02em; }
+.home-title { font-weight: 600; font-size: clamp(2.5rem, 10vw, 3.9rem); line-height: 1; letter-spacing: -0.025em; }
+.subtitle, .panel-title, .cal-month, .sheet-head h2 { font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; }
+.step-legend { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+.summary .total strong { font-size: 1.6rem; font-weight: 600; }
+.alias-card .alias { font-size: clamp(1.6rem, 6.5vw, 2.1rem); font-weight: 600; letter-spacing: 0.02em; }
+.resumen-rows .row.total dd, .dc-head .dd { font-size: 1.3rem; font-weight: 600; }
+.consulta-turno .ct-date { font-size: 1.2rem; font-weight: 600; }
+.stat .value { font-size: clamp(1.55rem, 4vw, 1.9rem); font-weight: 600; }
+.time { font-size: 1.1rem; font-weight: 500; }
+.month-head strong, .wp-day .dd, .agenda-date-nav span, .client-stats dd { font-size: 1.25rem; font-weight: 600; }
+#mod-turno-actual > p:first-child { font-size: 1.3rem !important; font-weight: 600; }
 </style>
 </head>
 <body>
