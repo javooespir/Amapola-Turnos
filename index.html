@@ -1617,6 +1617,11 @@ let agendaFechaActual = new Date();
   overlay.innerHTML = '<div style="font-family:\'Cormorant Garamond\',Georgia,serif;font-size:2rem;color:#4E0F1B;">Amapola Studio</div><div style="font-family:Outfit,sans-serif;color:#7a6461;font-size:.9rem;letter-spacing:.2em;text-transform:uppercase;">Cargando turnos</div>';
   document.body.appendChild(overlay);
 
+  // Esta función se ejecuta antes de que el script declare SB_URL/SB_HDR más abajo.
+  // Sin esta espera, la primera sincronización fallaba en silencio (sbGet devolvía null)
+  // y durante ~15 s la reserva mostraba 0 turnos, 0 bloqueos y el horario por defecto.
+  await null;
+
   // Intentar Supabase
   try {
     await sincronizarDesdeSupabase();
