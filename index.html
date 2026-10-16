@@ -673,6 +673,9 @@ button.stat:hover { border-color: oklch(0.20 0.014 20 / 0.3); }
 .price-input::before { content: "$"; position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
 .price-input .input { padding-left: 1.75rem; font-variant-numeric: lining-nums tabular-nums; }
 .price-row.changed .input { border-color: var(--poppy); }
+.price-row.is-oculto .pr-name strong { color: var(--muted); }
+.pr-toggle { min-height: 2.25rem; padding: 0 0.85rem; border-radius: var(--r-full); border: 1px solid var(--line); background: var(--card); color: var(--muted); font: inherit; font-size: 0.82rem; cursor: pointer; }
+.pr-toggle.on { border-color: var(--poppy); background: var(--blush); color: var(--wine); }
 .pct { position: relative; width: 7rem; }
 .pct::after { content: "%"; position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
 .pct .input { padding-right: 2rem; }
@@ -970,6 +973,8 @@ em, .it, .bk .note { font-style: normal; }
             <option value="combo9">Combo: Limpieza + Lifting + Drenaje + Perfilado</option>
             <option value="combo10">Combo: Limpieza + Lifting + Drenaje + Laminado</option>
             <option value="combo11">Combo: Peeling + Lifting de pestañas</option>
+            <option value="combo12">Combo: Lifting + Perfilado + Drenaje</option>
+            <option value="combo13">Combo: Limpieza + Perfilado + Drenaje</option>
           </select>
           <div id="trat-cards"></div>
           <div id="precio-badge"></div>
@@ -1511,6 +1516,8 @@ em, .it, .bk .note { font-style: normal; }
               <option value="combo9">Combo: Limpieza + Lifting + Drenaje + Perfilado</option>
               <option value="combo10">Combo: Limpieza + Lifting + Drenaje + Laminado</option>
               <option value="combo11">Combo: Peeling + Lifting de pestañas</option>
+              <option value="combo12">Combo: Lifting + Perfilado + Drenaje</option>
+              <option value="combo13">Combo: Limpieza + Perfilado + Drenaje</option>
             </optgroup>
           </select>
         </div>
@@ -1608,6 +1615,8 @@ const TRATS = {
   combo9:  { n:'Combo: Limpieza + Lifting + Drenaje + Perfilado', dur:150, precio:95000, camilla:'exclusiva' },
   combo10: { n:'Combo: Limpieza + Lifting + Drenaje + Laminado',  dur:150, precio:100000, camilla:'exclusiva' },
   combo11: { n:'Combo: Peeling + Lifting de pestañas',            dur:105, precio:65000, camilla:'exclusiva' },
+  combo12: { n:'Combo: Lifting + Perfilado + Drenaje',            dur:150, precio:80000, camilla:'exclusiva' },
+  combo13: { n:'Combo: Limpieza + Perfilado + Drenaje',           dur:150, precio:100000, camilla:'exclusiva' },
 };
 
 // HORARIOS POR DÍA DE SEMANA (0=domingo, 1=lunes, etc.)
@@ -1843,6 +1852,12 @@ function generarMensajeRecordatorio(tratN, tratK, fecha, hora, zonas=[]) {
 
     // Limpieza + Lifting + Drenaje + Laminado — 2 hs y media
     'combo10': 'Venir sin maquillaje, máscara de pestañas ni maquillaje de cejas, y con ropa cómoda ya que la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte pestañas ni cejas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.' + (zonas.includes('piernas') ? '\nSi te haces piernas, las maniobras van desde la ingle hasta la punta de los pies.' : '') + '\nDuración aprox: 2 horas y media.',
+
+    // Lifting + Perfilado + Drenaje — 2 hs 30 min
+    'combo12': 'Venir sin máscara de pestañas ni maquillaje de cejas, y con ropa cómoda ya que la zona de drenaje debe estar descubierta.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs.',
+
+    // Limpieza + Perfilado + Drenaje — 2 hs 30 min
+    'combo13': 'Venir sin maquillaje y con ropa cómoda, la zona de drenaje debe estar descubierta.\nEvitá el sol las próximas 48hs y no uses maquillaje por 12hs.',
 
     // Peeling + Lifting de pestañas — 1 hora 45 min
     'combo11': 'Venir sin maquillaje ni máscara de pestañas.\nLuego del tratamiento no podés mojarte ni maquillarte las pestañas por 24hs, y evitá el sol las próximas 48hs reforzando la protección solar.\nDuración aprox: 1 hora y 45 min.'
@@ -2126,11 +2141,39 @@ function irPag2() {
   showPage('p2');
 }
 
+// Tratamientos que no se ofrecen por ahora. Se vuelven a mostrar desde el panel (Tratamientos).
+const OCULTOS_DEFAULT = ['peeling', 'combo11'];
+const getOcultos = () => {
+  const v = getCfg().ocultos;
+  if (v === undefined || v === null) return [...OCULTOS_DEFAULT];
+  return String(v).split(',').map(x => x.trim()).filter(Boolean);
+};
+const estaOculto = k => getOcultos().includes(k);
+async function toggleOculto(k) {
+  const lista = getOcultos();
+  const i = lista.indexOf(k);
+  if (i >= 0) lista.splice(i, 1); else lista.push(k);
+  setCfg({ ...getCfg(), ocultos: lista.join(',') });
+  renderConfig();
+  const nombre = TRATS[k].n.replace(/^Combo: /, '');
+  toast(estaOculto(k) ? nombre + ' ya no aparece en la web' : nombre + ' vuelve a aparecer en la web');
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/config', {
+      method: 'POST',
+      headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ key: 'ocultos', value: lista.join(',') }])
+    });
+    if (!r.ok) toast('Guardado solo en este dispositivo', { error: true });
+  } catch(e) {
+    toast('Guardado solo en este dispositivo (sin conexión)', { error: true });
+  }
+}
+
 const TRAT_GRUPOS = [
   { id: 'cejas', label: 'Cejas y pestañas', keys: ['lp','pc','lac'] },
   { id: 'rostro', label: 'Rostro', keys: ['lc','peeling'] },
   { id: 'cuerpo', label: 'Cuerpo', keys: ['dl'] },
-  { id: 'combos', label: 'Combos', keys: ['combo1','combo2','combo3','combo4','combo5','combo6','combo7','combo8','combo9','combo10','combo11'] }
+  { id: 'combos', label: 'Combos', keys: ['combo1','combo2','combo3','combo4','combo5','combo6','combo7','combo8','combo9','combo10','combo11','combo12','combo13'] }
 ];
 
 function durTexto(min) {
@@ -2146,10 +2189,11 @@ function renderTratCards() {
   const actual = document.getElementById('sel-trat').value;
   if (!_catReserva) _catReserva = (TRAT_GRUPOS.find(g => g.keys.includes(actual)) || TRAT_GRUPOS[0]).id;
   const grupo = TRAT_GRUPOS.find(g => g.id === _catReserva) || TRAT_GRUPOS[0];
-  const tabs = TRAT_GRUPOS.map(g =>
-    `<button type="button" class="chip" aria-pressed="${g.id === grupo.id}" onclick="elegirCategoria('${g.id}')">${g.label}<span class="count">${g.keys.length}</span></button>`
+  const visibles = g => g.keys.filter(k => TRATS[k] && !estaOculto(k));
+  const tabs = TRAT_GRUPOS.filter(g => visibles(g).length).map(g =>
+    `<button type="button" class="chip" aria-pressed="${g.id === grupo.id}" onclick="elegirCategoria('${g.id}')">${g.label}<span class="count">${visibles(g).length}</span></button>`
   ).join('');
-  const cards = grupo.keys.map(k => {
+  const cards = visibles(grupo).map(k => {
     const t = TRATS[k];
     if (!t) return '';
     const precio = precios[k] !== undefined ? precios[k] : t.precio;
@@ -3689,8 +3733,10 @@ function renderConfig() {
       <div class="list-card">${g.keys.map(k => {
         const t = TRATS[k];
         const precioActual = precios[k] !== undefined ? precios[k] : t.precio;
-        return `<div class="price-row">
-          <div class="pr-name"><strong>${t.n.replace(/^Combo: /, '')}</strong><span>${durTexto(t.dur)}</span></div>
+        const oculto = estaOculto(k);
+        return `<div class="price-row${oculto ? ' is-oculto' : ''}">
+          <div class="pr-name"><strong>${t.n.replace(/^Combo: /, '')}</strong><span>${durTexto(t.dur)}${oculto ? ' · no se muestra en la web' : ''}</span></div>
+          <button type="button" class="pr-toggle${oculto ? '' : ' on'}" onclick="toggleOculto('${k}')" aria-pressed="${!oculto}" title="${oculto ? 'Mostrar en la web' : 'Ocultar de la web'}">${oculto ? 'Oculto' : 'Visible'}</button>
           <div class="price-input">
             <label class="sr-only" for="precio-${k}">Precio de ${t.n}</label>
             <input type="number" inputmode="numeric" class="input" id="precio-${k}" value="${precioActual}" step="500" min="0" oninput="this.closest('.price-row').classList.add('changed')">
@@ -3883,7 +3929,9 @@ const MSGS_LABELS = {
   combo8:  'Combo: Limpieza + Lifting + Laminado',
   combo9:  'Combo: Limpieza + Lifting + Drenaje + Perfilado',
   combo10: 'Combo: Limpieza + Lifting + Drenaje + Laminado',
-  combo11: 'Combo: Peeling + Lifting de pestañas'
+  combo11: 'Combo: Peeling + Lifting de pestañas',
+  combo12: 'Combo: Lifting + Perfilado + Drenaje',
+  combo13: 'Combo: Limpieza + Perfilado + Drenaje'
 };
 
 const getCfgMensajes = () => { try { return JSON.parse(localStorage.getItem('amp_msgs') || '{}'); } catch { return {}; } };
